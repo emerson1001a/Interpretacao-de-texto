@@ -16,7 +16,7 @@ npm start
 Depois acesse:
 
 ```text
-http://localhost:3000/index.html
+http://localhost:3001/index.html
 ```
 
 No Windows, tambem e possivel usar o arquivo `iniciar_interpretacao.bat`.

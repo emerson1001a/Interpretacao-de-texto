@@ -22,7 +22,7 @@ start "Interpretacao Backend" cmd /k "npm start"
 
 timeout /t 3 >nul
 
-start "" "http://localhost:3000/index.html"
+start "" "http://localhost:3001/index.html"
 
 echo.
 echo Servidor iniciado.

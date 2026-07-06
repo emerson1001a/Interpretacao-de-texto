@@ -312,7 +312,7 @@ app.get("/api/leitura/detalhe", async (req, res) => {
 });
 
 if (!process.env.VERCEL) {
-  const PORT = Number(process.env.PORT || 3000);
+  const PORT = Number(process.env.PORT || 3001);
   app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
   });
