@@ -204,7 +204,11 @@ Responda em portugues, sem markdown.
   return generated || `Bom trabalho! Voce concluiu a leitura e respondeu as perguntas. Continue usando partes do texto para justificar suas respostas. Resultado objetivo: ${metrics.mcq_score}/${metrics.mcq_max}.`;
 }
 
-app.get(["/", "/api"], (_req, res) => {
+app.get(["/", "/index.html"], (_req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.get("/api", (_req, res) => {
   res.type("text/plain; charset=utf-8").send("OK - Interpretacao de Texto backend rodando");
 });
 
