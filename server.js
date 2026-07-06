@@ -183,6 +183,19 @@ function computeMetrics(leitura) {
   };
 }
 
+function leituraFromRequest(body = {}) {
+  return {
+    id: Number(body.leitura_id) || 0,
+    aluno: cleanText(body.aluno, "Aluno") || "Aluno",
+    idade: clampNumber(body.idade, 11, 6, 18),
+    texto: cleanText(body.texto),
+    read_time_ms: Number(body.read_time_ms) || null,
+    questions: Array.isArray(body.questions) ? body.questions : [],
+    respostas: Array.isArray(body.respostas) ? body.respostas : [],
+    feedback: ""
+  };
+}
+
 async function generateFeedback(leitura) {
   const metrics = computeMetrics(leitura);
   const respostas = (leitura.respostas || [])
@@ -247,12 +260,15 @@ app.post("/api/leitura/finish-reading", async (req, res) => {
   try {
     const leituraId = Number(req.body?.leitura_id);
     const store = await readStore();
-    const leitura = store.leituras.find((item) => item.id === leituraId);
+    let leitura = store.leituras.find((item) => item.id === leituraId);
+    if (!leitura && req.body?.texto) {
+      leitura = leituraFromRequest(req.body);
+    }
     if (!leitura) return res.status(404).json({ error: "Sessao nao encontrada" });
 
     leitura.read_time_ms = Number(req.body?.read_time_ms) || null;
     leitura.questions = await generateQuestions(leitura.texto);
-    await writeStore(store);
+    if (store.leituras.some((item) => item.id === leituraId)) await writeStore(store);
     res.json({ questions: leitura.questions });
   } catch (error) {
     res.status(500).json({ error: "Erro ao gerar perguntas", details: error.message });
@@ -263,7 +279,7 @@ app.post("/api/leitura/answer", async (req, res) => {
   const leituraId = Number(req.body?.leitura_id);
   const store = await readStore();
   const leitura = store.leituras.find((item) => item.id === leituraId);
-  if (!leitura) return res.status(404).json({ error: "Sessao nao encontrada" });
+  if (!leitura) return res.json({ ok: true, stored: false });
 
   leitura.respostas.push({
     pergunta_index: Number(req.body?.pergunta_index) || null,
@@ -281,11 +297,14 @@ app.post("/api/leitura/finish", async (req, res) => {
   try {
     const leituraId = Number(req.body?.leitura_id);
     const store = await readStore();
-    const leitura = store.leituras.find((item) => item.id === leituraId);
+    let leitura = store.leituras.find((item) => item.id === leituraId);
+    if (!leitura && req.body?.texto) {
+      leitura = leituraFromRequest(req.body);
+    }
     if (!leitura) return res.status(404).json({ error: "Sessao nao encontrada" });
 
     leitura.feedback = await generateFeedback(leitura);
-    await writeStore(store);
+    if (store.leituras.some((item) => item.id === leituraId)) await writeStore(store);
     res.json({ feedback: leitura.feedback, metrics: computeMetrics(leitura) });
   } catch (error) {
     res.status(500).json({ error: "Erro ao gerar feedback", details: error.message });

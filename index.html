@@ -186,6 +186,7 @@
     qTimesMs: [],
     qTicker: null,
     answers: {},
+    submittedAnswers: [],
     mcqKeys: {},
     fontSize: 18
   };
@@ -327,6 +328,7 @@
     state.textHidden="";
     state.questions=[];
     state.answers={};
+    state.submittedAnswers=[];
     state.mcqKeys={};
     state.leituraId=null;
     state.readingStartMs=null;
@@ -383,7 +385,13 @@
     el("kpiRead").textContent = formatMs(state.readTimeMs);
 
     try{
-      const fin = await api("/api/leitura/finish-reading", { leitura_id: state.leituraId, read_time_ms: state.readTimeMs });
+      const fin = await api("/api/leitura/finish-reading", {
+        leitura_id: state.leituraId,
+        read_time_ms: state.readTimeMs,
+        texto: state.textHidden,
+        aluno: el("studentName").value.trim(),
+        idade: Number(el("age").value||11)
+      });
       state.questions = Array.isArray(fin.questions) ? fin.questions : [];
       state.questions.forEach((q,i)=>{
         if(q.type==="mcq" && q.answer_key) state.mcqKeys["q"+i]=q.answer_key;
@@ -421,19 +429,23 @@
     }
 
     const tags = Array.isArray(q.tags) ? q.tags : [];
+    const answerRecord = {
+      pergunta_index: state.qIndex+1,
+      pergunta: q.prompt || "",
+      resposta: ans,
+      correta,
+      tempo_ms: timeMs,
+      tags
+    };
+    state.submittedAnswers[state.qIndex] = answerRecord;
 
     try{
       await api("/api/leitura/answer", {
         leitura_id: state.leituraId,
-        pergunta_index: state.qIndex+1,
-        pergunta: q.prompt || "",
-        resposta: ans,
-        correta,
-        tempo_ms: timeMs,
-        tags
+        ...answerRecord
       });
     } catch(e){
-      alert("Aviso: não consegui salvar esta resposta no banco. " + (e.message||e));
+      console.warn("Resposta mantida nesta sessao:", e);
     }
 
     state.qIndex += 1;
@@ -451,7 +463,15 @@
   async function finishAndFeedback(){
     setStep(4);
     try{
-      const fin = await api("/api/leitura/finish", { leitura_id: state.leituraId });
+      const fin = await api("/api/leitura/finish", {
+        leitura_id: state.leituraId,
+        texto: state.textHidden,
+        questions: state.questions,
+        respostas: state.submittedAnswers.filter(Boolean),
+        read_time_ms: state.readTimeMs,
+        aluno: el("studentName").value.trim(),
+        idade: Number(el("age").value||11)
+      });
       el("studentFeedback").textContent =
 `Sessão: ${state.leituraId}
 
@@ -470,7 +490,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
 
   function resetAll(){
     state.prepared=false; state.stage=0; state.leituraId=null;
-    state.textHidden=""; state.questions=[]; state.answers={}; state.mcqKeys={};
+    state.textHidden=""; state.questions=[]; state.answers={}; state.submittedAnswers=[]; state.mcqKeys={};
     state.readingStartMs=null; state.readTimeMs=null; state.qIndex=-1; state.qTimesMs=[];
     stopReadTimer(); stopQuestionTimer();
 
