@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Interpretação de Texto — Miguel (V6)</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#0b1220;--muted:#5b6476;--line:#e7eaf2;--accent:#111827;--blue:#2563eb;--warn:#b8002a;--shadow:0 18px 45px rgba(12,20,33,.10);--r:18px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  header{padding:18px 16px;background:linear-gradient(135deg,#0b1220,#111827 60%,#1f2937);color:#fff}
+  header h1{margin:0;font-size:18px}
+  header p{margin:6px 0 0;opacity:.85;font-size:13px;max-width:980px}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:14px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px}
+  .card h2{margin:0 0 10px;font-size:14px}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+  input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);outline:none;background:#fff;font-size:14px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  button{border:0;border-radius:14px;padding:10px 12px;cursor:pointer;font-weight:750;background:var(--accent);color:#fff;font-size:13px}
+  button.secondary{background:#eef1fb;color:var(--ink)}
+  button.blue{background:var(--blue)}
+  button.warn{background:var(--warn)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:7px 10px;border-radius:999px;background:#eef1fb;font-size:12px;color:var(--ink);border:1px solid var(--line)}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .sep{height:1px;background:var(--line);margin:12px 0}
+  .progress{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .step{padding:10px;border-radius:14px;border:1px solid var(--line);background:#fbfcff;font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+  .step.active{border-color:#c7d2fe;background:#eef2ff;color:#1e3a8a}
+  .step.done{border-color:#bbf7d0;background:#f0fdf4;color:#14532d}
+  .readbox{border:1px solid var(--line);border-radius:var(--r);padding:16px;background:#fcfcff}
+  .readmeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .readmeta .left{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .readtext{font-size:18px;line-height:1.75;letter-spacing:.1px;max-width:78ch;white-space:pre-wrap}
+  .readtext.blurred{filter:blur(10px);user-select:none}
+  .fontbtn{padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:800}
+  .q{padding:12px;border-radius:16px;border:1px solid var(--line);background:#f7f8fd;margin:10px 0}
+  .q h3{margin:0 0 6px;font-size:13px}
+  .q small{display:block;color:var(--muted);margin-bottom:8px}
+  pre{margin:0;padding:12px;border-radius:16px;background:#0f172a;color:#e5e7eb;white-space:pre-wrap;border:1px solid #1f2937}
+  .note{font-size:12px;color:var(--muted)}
+  .modalback{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+  .modal{width:min(920px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid var(--line);padding:8px;font-size:12px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<header>
+  <h1>Interpretação de Texto (V6) — conectado ao servidor</h1>
+  <p>Fluxo: Preparar → Iniciar (texto aparece + cronômetro) → Finalizar leitura (para + gera perguntas) → Tempo por questão → Feedback + Área da professora (PIN 1234).</p>
+</header>
+
+<main>
+  <div class="grid">
+    <section class="card">
+      <h2>Início</h2>
+
+      <label>Nome do aluno *</label>
+      <input id="studentName" placeholder="Ex: Miguel"/>
+
+      <label>Idade *</label>
+      <input id="age" type="number" min="6" max="18" value="11"/>
+
+      <label>Tema (opcional)</label>
+      <input id="theme" placeholder="Ex: amizade, esporte, escola..."/>
+
+      <label>Tamanho do texto</label>
+      <select id="length">
+        <option value="">Automático pela idade</option>
+        <option value="curto">Curto</option>
+        <option value="medio" selected>Médio</option>
+        <option value="longo">Longo</option>
+      </select>
+
+      <div class="btnrow">
+        <button id="btnPrepare" class="blue">Preparar atividade</button>
+        <button id="btnReset" class="secondary">Limpar</button>
+        <button id="btnTeacher" class="warn" style="margin-left:auto">Área da professora</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="kpis">
+        <span class="pill">⏱️ Leitura: <strong id="kpiRead">—</strong></span>
+        <span class="pill">⏱️ Questão: <strong id="kpiQ">—</strong></span>
+        <span class="pill">📌 Sessão: <strong id="kpiSess">—</strong></span>
+      </div>
+
+      <div class="progress">
+        <div class="step" id="s1">1) Preparar</div>
+        <div class="step" id="s2">2) Ler</div>
+        <div class="step" id="s3">3) Responder</div>
+        <div class="step" id="s4">4) Feedback</div>
+      </div>
+
+      <p class="note" style="margin-top:10px">
+        Este HTML chama o backend do RedaçãoMiguelGPT no mesmo host. Se o servidor estiver em outra porta, ajuste <code>API_BASE</code> no script.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Leitura</h2>
+      <div class="readbox">
+        <div class="readmeta">
+          <div class="left">
+            <button id="btnStartRead" class="blue" disabled>Iniciar (mostrar texto)</button>
+          </div>
+          <div class="left">
+            <span class="pill">Fonte</span>
+            <button class="fontbtn" id="fontDown">A−</button>
+            <button class="fontbtn" id="fontUp">A+</button>
+          </div>
+        </div>
+        <div id="readtext" class="readtext blurred">Prepare a atividade para carregar o texto. O texto só aparece quando você clicar em “Iniciar”.</div>
+        <div class="btnrow" style="margin-top:12px;justify-content:flex-start;">
+          <button id="btnFinishRead" disabled>Finalizar leitura</button>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <h2>Questões</h2>
+      <div id="questions" class="note">Finalize a leitura para iniciar as perguntas.</div>
+
+      <div class="btnrow">
+        <button id="btnNext" class="blue" disabled>Próxima</button>
+        <button id="btnFinish" disabled>Finalizar e ver feedback</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <h2>Feedback do aluno</h2>
+      <pre id="studentFeedback">—</pre>
+    </section>
+  </div>
+</main>
+
+<div class="modalback" id="modalBack">
+  <div class="modal">
+    <h2 style="margin:0 0 6px;font-size:15px;">Área da professora</h2>
+    <p class="note" style="margin:0 0 12px;">PIN: <strong>1234</strong>. Mostra histórico longitudinal de leitura.</p>
+
+    <div class="row">
+      <div>
+        <label>PIN</label>
+        <input id="pin" type="password" placeholder="1234"/>
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <button id="btnOpenTeacher" class="warn" style="width:100%;">Abrir</button>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div id="teacherHost" class="note">—</div>
+<div class="sep"></div>
+<div id="teacherDetailHost" class="note">Selecione uma sessão na tabela para ver detalhes.</div>
+
+    <div class="btnrow">
+      <button id="btnClose" class="secondary">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:3000";
+
+  const el = (id) => document.getElementById(id);
+
+  const state = {
+    prepared: false,
+    stage: 0,
+    leituraId: null,
+    textHidden: "",
+    questions: [],
+    readingStartMs: null,
+    readTimeMs: null,
+    readTicker: null,
+    qIndex: -1,
+    qStartMs: null,
+    qTimesMs: [],
+    qTicker: null,
+    answers: {},
+    mcqKeys: {},
+    fontSize: 18
+  };
+
+  function setStep(stage){
+    state.stage = stage;
+    const s1=el("s1"), s2=el("s2"), s3=el("s3"), s4=el("s4");
+    [s1,s2,s3,s4].forEach(x=>x.className="step");
+    if(stage>=1) s1.classList.add("done");
+    if(stage===1) s1.classList.add("active");
+    if(stage>=2) s2.classList.add(stage===2?"active":"done");
+    if(stage>=3) s3.classList.add(stage===3?"active":"done");
+    if(stage>=4) s4.classList.add("active");
+  }
+
+  function validateStartFields(){
+    const name = el("studentName").value.trim();
+    const age = Number(el("age").value||0);
+    return !!name && age>=6 && age<=18;
+  }
+
+  function showText(visible){
+    const box = el("readtext");
+    if(visible){
+      box.textContent = state.textHidden || "";
+      box.classList.remove("blurred");
+    } else {
+      box.textContent = "Texto oculto. Clique em “Iniciar (mostrar texto)”.";
+      box.classList.add("blurred");
+    }
+  }
+
+  function setButtons(){
+    const prepared = state.prepared;
+    const reading = state.readingStartMs !== null && state.readTimeMs === null;
+    el("btnStartRead").disabled = !(prepared && !reading && state.readTimeMs===null);
+    el("btnFinishRead").disabled = !reading;
+
+    const canAnswer = state.readTimeMs !== null && state.questions.length>0;
+    el("btnNext").disabled = !(canAnswer && state.qIndex>=0 && state.qIndex < state.questions.length);
+    el("btnFinish").disabled = !(canAnswer && state.qIndex===state.questions.length);
+  }
+
+  function formatMs(ms){
+    if(ms===null || ms===undefined) return "—";
+    const s = Math.round(ms/1000);
+    return s + "s";
+  }
+
+  function startReadTimer(){
+    if(state.readTicker) clearInterval(state.readTicker);
+    state.readTicker = setInterval(()=>{
+      if(state.readingStartMs){
+        const ms = Date.now()-state.readingStartMs;
+        el("kpiRead").textContent = formatMs(ms);
+      }
+    }, 250);
+  }
+  function stopReadTimer(){
+    if(state.readTicker) clearInterval(state.readTicker);
+    state.readTicker = null;
+  }
+
+  function startQuestionTimer(){
+    state.qStartMs = Date.now();
+    if(state.qTicker) clearInterval(state.qTicker);
+    state.qTicker = setInterval(()=>{
+      if(state.qStartMs){
+        el("kpiQ").textContent = formatMs(Date.now()-state.qStartMs);
+      }
+    }, 250);
+  }
+  function stopQuestionTimer(){
+    if(state.qTicker) clearInterval(state.qTicker);
+    state.qTicker = null;
+  }
+
+  function renderQuestion(){
+    const host = el("questions");
+    host.innerHTML = "";
+
+    if(state.qIndex<0){
+      host.textContent = "Finalize a leitura para iniciar as perguntas.";
+      return;
+    }
+    if(state.qIndex >= state.questions.length){
+      host.innerHTML = `<div class="note">Você respondeu todas as perguntas. Clique em “Finalizar e ver feedback”.</div>`;
+      return;
+    }
+
+    const q = state.questions[state.qIndex];
+    const wrap=document.createElement("div");
+    wrap.className="q";
+
+    const h=document.createElement("h3");
+    h.textContent=`Q${state.qIndex+1}/${state.questions.length}. ${q.prompt || "(pergunta)"}`;
+    const sm=document.createElement("small");
+    sm.textContent = (q.type==="mcq") ? "Múltipla escolha" : "Resposta curta";
+    wrap.appendChild(h);
+    wrap.appendChild(sm);
+
+    if(q.type==="mcq" && Array.isArray(q.options) && q.options.length===4){
+      const sel=document.createElement("select");
+      sel.innerHTML = `<option value="">Selecione...</option>` + q.options.map(o=>`<option>${o}</option>`).join("");
+      sel.value = state.answers["q"+state.qIndex] || "";
+      sel.onchange=()=> state.answers["q"+state.qIndex]=sel.value;
+      wrap.appendChild(sel);
+    } else {
+      const ta=document.createElement("textarea");
+      ta.placeholder="Digite sua resposta...";
+      ta.value = state.answers["q"+state.qIndex] || "";
+      ta.oninput=()=> state.answers["q"+state.qIndex]=ta.value;
+      wrap.appendChild(ta);
+    }
+
+    host.appendChild(wrap);
+  }
+
+  async function api(path, body){
+    const res = await fetch(API_BASE + path, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body||{})
+    });
+    const json = await res.json().catch(()=> ({}));
+    if(!res.ok) throw new Error(json.error || json.details || ("HTTP " + res.status));
+    return json;
+  }
+
+  async function prepareActivity(){
+    if(!validateStartFields()){
+      alert("Informe NOME e IDADE (6 a 18).");
+      return;
+    }
+
+    el("btnPrepare").disabled=true;
+
+    state.prepared=false;
+    state.textHidden="";
+    state.questions=[];
+    state.answers={};
+    state.mcqKeys={};
+    state.leituraId=null;
+    state.readingStartMs=null;
+    state.readTimeMs=null;
+    state.qIndex=-1;
+    state.qTimesMs=[];
+    stopReadTimer(); stopQuestionTimer();
+
+    el("kpiRead").textContent="—";
+    el("kpiQ").textContent="—";
+    el("studentFeedback").textContent="—";
+    el("questions").textContent="Finalize a leitura para iniciar as perguntas.";
+    showText(false);
+
+    try{
+      setStep(1);
+
+      const aluno = el("studentName").value.trim();
+      const idade = Number(el("age").value||11);
+      const tema = el("theme").value.trim();
+      const tamanho = el("length").value;
+
+      const start = await api("/api/leitura/start", { aluno, idade, tema, tamanho });
+      state.leituraId = start.leitura_id;
+      state.textHidden = start.text || start.texto || "";
+      state.prepared = true;
+
+      el("kpiSess").textContent = String(state.leituraId || "—");
+
+      setStep(2);
+      setButtons();
+    } catch(e){
+      alert("Erro ao preparar: " + (e.message||e));
+    } finally{
+      el("btnPrepare").disabled=false;
+    }
+  }
+
+  function startRead(){
+    if(!state.prepared) return;
+    showText(true);
+    state.readingStartMs = Date.now();
+    state.readTimeMs = null;
+    startReadTimer();
+    setStep(2);
+    setButtons();
+  }
+
+  async function finishRead(){
+    if(!state.readingStartMs) return;
+
+    state.readTimeMs = Date.now()-state.readingStartMs;
+    stopReadTimer();
+    el("kpiRead").textContent = formatMs(state.readTimeMs);
+
+    try{
+      const fin = await api("/api/leitura/finish-reading", { leitura_id: state.leituraId, read_time_ms: state.readTimeMs });
+      state.questions = Array.isArray(fin.questions) ? fin.questions : [];
+      state.questions.forEach((q,i)=>{
+        if(q.type==="mcq" && q.answer_key) state.mcqKeys["q"+i]=q.answer_key;
+      });
+
+      state.qIndex = 0;
+      startQuestionTimer();
+      renderQuestion();
+
+      setStep(3);
+      setButtons();
+    } catch(e){
+      alert("Erro ao finalizar leitura: " + (e.message||e));
+    }
+  }
+
+  async function nextQuestion(){
+    if(state.qIndex<0 || state.qIndex>=state.questions.length) return;
+
+    const q = state.questions[state.qIndex];
+    const ans = (state.answers["q"+state.qIndex] || "").trim();
+
+    if(q.type==="mcq"){
+      if(!ans){ alert("Selecione uma alternativa."); return; }
+    } else {
+      if(ans.length<3){ alert("Escreva pelo menos uma frase curta."); return; }
+    }
+
+    const timeMs = Date.now()-state.qStartMs;
+    state.qTimesMs[state.qIndex] = timeMs;
+
+    let correta = null;
+    if(q.type==="mcq" && state.mcqKeys["q"+state.qIndex]){
+      correta = (ans === state.mcqKeys["q"+state.qIndex]);
+    }
+
+    const tags = Array.isArray(q.tags) ? q.tags : [];
+
+    try{
+      await api("/api/leitura/answer", {
+        leitura_id: state.leituraId,
+        pergunta_index: state.qIndex+1,
+        pergunta: q.prompt || "",
+        resposta: ans,
+        correta,
+        tempo_ms: timeMs,
+        tags
+      });
+    } catch(e){
+      alert("Aviso: não consegui salvar esta resposta no banco. " + (e.message||e));
+    }
+
+    state.qIndex += 1;
+    if(state.qIndex < state.questions.length){
+      startQuestionTimer();
+      renderQuestion();
+    } else {
+      stopQuestionTimer();
+      el("kpiQ").textContent = "—";
+      renderQuestion();
+    }
+    setButtons();
+  }
+
+  async function finishAndFeedback(){
+    setStep(4);
+    try{
+      const fin = await api("/api/leitura/finish", { leitura_id: state.leituraId });
+      el("studentFeedback").textContent =
+`Sessão: ${state.leituraId}
+
+${fin.feedback || "—"}
+
+⏱️ Tempo de leitura: ${formatMs(state.readTimeMs)}
+⏱️ Tempo por questão:
+${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
+
+📊 MCQ: ${(fin.metrics && fin.metrics.mcq_score!=null) ? (fin.metrics.mcq_score + "/" + fin.metrics.mcq_max) : "—"}
+`;
+    } catch(e){
+      alert("Erro ao gerar feedback: " + (e.message||e));
+    }
+  }
+
+  function resetAll(){
+    state.prepared=false; state.stage=0; state.leituraId=null;
+    state.textHidden=""; state.questions=[]; state.answers={}; state.mcqKeys={};
+    state.readingStartMs=null; state.readTimeMs=null; state.qIndex=-1; state.qTimesMs=[];
+    stopReadTimer(); stopQuestionTimer();
+
+    el("studentName").value="";
+    el("age").value="11";
+    el("theme").value="";
+    el("length").value="medio";
+
+    el("kpiRead").textContent="—";
+    el("kpiQ").textContent="—";
+    el("kpiSess").textContent="—";
+    el("studentFeedback").textContent="—";
+    el("questions").textContent="Finalize a leitura para iniciar as perguntas.";
+    showText(false);
+    setStep(0);
+    setButtons();
+  }
+
+  function applyFont(){ el("readtext").style.fontSize = state.fontSize + "px"; }
+  el("fontUp").onclick = ()=>{ state.fontSize=Math.min(24,state.fontSize+1); applyFont(); };
+  el("fontDown").onclick = ()=>{ state.fontSize=Math.max(16,state.fontSize-1); applyFont(); };
+
+  function openTeacher(){ el("modalBack").style.display="flex"; el("teacherHost").textContent="—"; el("pin").value=""; }
+  function closeTeacher(){ el("modalBack").style.display="none"; }
+
+  async function openTeacherReport(){
+    if(el("pin").value.trim()!=="1234"){ alert("PIN incorreto"); return; }
+
+    const aluno = el("studentName").value.trim() || "Miguel";
+    const idade = Number(el("age").value||11);
+
+    const url = API_BASE + `/api/leitura/resumo?aluno=${encodeURIComponent(aluno)}&idade=${encodeURIComponent(idade)}&limit=30`;
+    const res = await fetch(url);
+    const json = await res.json().catch(()=> ({}));
+    if(!res.ok) { alert("Erro: " + (json.error||json.details||res.status)); return; }
+
+    const sessoes = Array.isArray(json.sessoes) ? json.sessoes : [];
+    if(!sessoes.length){
+      el("teacherHost").innerHTML = `<div class="note">Sem sessões registradas para este aluno/idade.</div>`;
+
+    // Clique na linha para ver detalhes
+    el("teacherDetailHost").textContent = "Selecione uma sessão na tabela para ver detalhes.";
+    const tbody = el("teacherHost").querySelector("tbody");
+    if (tbody) {
+      tbody.querySelectorAll("tr[data-id]").forEach(tr => {
+        tr.addEventListener("click", async () => {
+          const id = tr.getAttribute("data-id");
+          try {
+            const r = await fetch(API_BASE + `/api/leitura/detalhe?id=${encodeURIComponent(id)}`);
+            const j = await r.json().catch(()=> ({}));
+            if (!r.ok) throw new Error(j.error || j.details || r.status);
+            const leitura = j.leitura || {};
+            const respostas = Array.isArray(j.respostas) ? j.respostas : [];
+            const metrics = j.metrics || {};
+            const fmt = (ms)=> (ms==null ? "—" : (Math.round(ms/1000)+"s"));
+            const acc = (metrics.mcq_accuracy_pct==null) ? "—" : (metrics.mcq_accuracy_pct + "%");
+            const lines = respostas.map(x => {
+              const idx = x.pergunta_index != null ? ("Q"+x.pergunta_index) : "Q?";
+              const t = fmt(x.tempo_ms);
+              const cor = (x.correta===1) ? "✓" : (x.correta===0) ? "✗" : "—";
+              return `${idx} (${t}) [${cor}]\nPergunta: ${x.pergunta || ""}\nResposta: ${x.resposta || ""}`;
+            }).join("\n\n");
+            el("teacherDetailHost").innerHTML = `
+              <div class="note" style="margin-bottom:8px;">
+                <strong>Sessão ${leitura.id}</strong> | Data: ${leitura.created_at || ""} | Leitura: ${fmt(leitura.read_time_ms)} | Média questão: ${fmt(metrics.avg_q_time_ms)} | MCQ: ${acc}
+              </div>
+              <pre style="margin-bottom:10px;">${(leitura.feedback || "—").toString()}</pre>
+              <details>
+                <summary style="cursor:pointer;font-weight:800;margin-bottom:8px;">Ver texto completo</summary>
+                <pre>${(leitura.texto || "").toString()}</pre>
+              </details>
+              <details open>
+                <summary style="cursor:pointer;font-weight:800;margin:10px 0 8px;">Perguntas e respostas</summary>
+                <pre>${lines || "—"}</pre>
+              </details>
+            `;
+          } catch (e) {
+            el("teacherDetailHost").textContent = "Erro ao carregar detalhes: " + (e.message || e);
+          }
+        });
+      });
+    }
+      return;
+    }
+
+    const formatMs2 = (ms) => (ms==null ? "—" : (Math.round(ms/1000)+"s"));
+
+    
+    const rows = sessoes.map(s=>{
+      const preview = (s.feedback || "").toString().replace(/\s+/g," ").slice(0,90);
+      return `
+      <tr style="cursor:pointer" data-id="${s.id}" title="Clique para ver detalhes">
+        <td>${s.id}</td>
+        <td>${s.created_at || ""}</td>
+        <td>${s.read_time_ms!=null ? formatMs2(s.read_time_ms) : "—"}</td>
+        <td>${s.avg_q_time_ms!=null ? formatMs2(s.avg_q_time_ms) : "—"}</td>
+        <td>${s.total_questions!=null ? s.total_questions : "—"}</td>
+        <td>${s.mcq_accuracy_pct!=null ? (s.mcq_accuracy_pct + "%") : "—"}</td>
+        <td>${s.tags_count ? `L:${s.tags_count.literal||0} I:${s.tags_count.inferencia||0} V:${s.tags_count.vocab||0}` : "—"}</td>
+        <td>${preview ? preview + "…" : "—"}</td>
+      </tr>`;
+    }).join("");
+
+
+    el("teacherHost").innerHTML = `
+      <div class="note" style="margin-bottom:8px;">Aluno: <strong>${json.aluno}</strong> | Idade: <strong>${json.idade}</strong> | Sessões: <strong>${sessoes.length}</strong></div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Data</th><th>Leitura</th><th>Média questão</th><th>#Q</th><th>MCQ</th><th>Tipos</th><th>Feedback (prévia)</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+
+      <div class="note" style="margin-top:10px;">Tipos: L=literal, I=inferência, V=vocabulário.</div>
+    `;
+el("teacherDetailHost").textContent = "Selecione uma sessão na tabela para ver detalhes.";
+
+const host = el("teacherHost");
+host.onclick = async (ev) => {
+  const tr = ev.target.closest("tr[data-id]");
+  if (!tr) return;
+
+  const id = tr.getAttribute("data-id");
+
+  try {
+    const r = await fetch(API_BASE + `/api/leitura/detalhe?id=${encodeURIComponent(id)}`);
+    const j = await r.json().catch(()=> ({}));
+    if (!r.ok) throw new Error(j.error || j.details || r.status);
+
+    const leitura = j.leitura || {};
+    const respostas = Array.isArray(j.respostas) ? j.respostas : [];
+    const metrics = j.metrics || {};
+
+    const fmt = (ms)=> (ms==null ? "—" : (Math.round(ms/1000)+"s"));
+    const acc = (metrics.mcq_accuracy_pct==null) ? "—" : (metrics.mcq_accuracy_pct + "%");
+
+    const lines = respostas.map(x => {
+      const idx = x.pergunta_index != null ? ("Q"+x.pergunta_index) : "Q?";
+      const t = fmt(x.tempo_ms);
+      const cor = (x.correta===1) ? "✓" : (x.correta===0) ? "✗" : "—";
+      return `${idx} (${t}) [${cor}]\nPergunta: ${x.pergunta || ""}\nResposta: ${x.resposta || ""}`;
+    }).join("\n\n");
+
+    el("teacherDetailHost").innerHTML = `
+      <div class="note" style="margin-bottom:8px;">
+        <strong>Sessão ${leitura.id}</strong> | Data: ${leitura.created_at || ""} | Leitura: ${fmt(leitura.read_time_ms)} | Média questão: ${fmt(metrics.avg_q_time_ms)} | MCQ: ${acc}
+      </div>
+      <pre style="margin-bottom:10px;">${(leitura.feedback || "—").toString()}</pre>
+      <details>
+        <summary style="cursor:pointer;font-weight:800;margin-bottom:8px;">Ver texto completo</summary>
+        <pre>${(leitura.texto || "").toString()}</pre>
+      </details>
+      <details open>
+        <summary style="cursor:pointer;font-weight:800;margin:10px 0 8px;">Perguntas e respostas</summary>
+        <pre>${lines || "—"}</pre>
+      </details>
+    `;
+  } catch (e) {
+    el("teacherDetailHost").textContent = "Erro ao carregar detalhes: " + (e.message || e);
+  }
+};
+
+  }
+
+  el("btnPrepare").onclick = prepareActivity;
+  el("btnReset").onclick = resetAll;
+  el("btnStartRead").onclick = startRead;
+  el("btnFinishRead").onclick = finishRead;
+  el("btnNext").onclick = nextQuestion;
+  el("btnFinish").onclick = finishAndFeedback;
+
+  el("btnTeacher").onclick = openTeacher;
+  el("btnClose").onclick = closeTeacher;
+  el("btnOpenTeacher").onclick = openTeacherReport;
+
+  el("modalBack").addEventListener("click", function(e){ if(e.target === this) closeTeacher(); });
+
+  applyFont();
+  resetAll();
+  setButtons();
+</script>
+</body>
+</html>

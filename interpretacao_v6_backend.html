@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Redação em 3 Missões</title>
+
+<style>
+:root{
+  --bg:#0b1220; --card:#101a2d; --card2:#0f172a;
+  --text:#e5e7eb; --muted:#a7b0c0; --line:rgba(255,255,255,.15);
+  --accent:#38bdf8; --good:#22c55e; --warn:#fbbf24; --bad:#ef4444;
+  --shadow:0 10px 30px rgba(0,0,0,.35); --r:18px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:system-ui,Segoe UI,Arial;
+  background:var(--bg); color:var(--text);
+}
+.wrap{max-width:760px;margin:auto;padding:20px}
+.card{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r); box-shadow:var(--shadow);
+}
+.top{padding:14px;border-bottom:1px solid var(--line)}
+.content{padding:14px}
+h1{margin:0}
+.sub{color:var(--muted);margin-top:6px}
+
+label{display:block;margin-top:12px;color:var(--muted)}
+textarea,input{
+  width:100%; margin-top:6px; padding:12px;
+  border-radius:14px; border:1px solid var(--line);
+  background:var(--card2); color:var(--text); font-size:16px;
+}
+textarea{min-height:140px}
+
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+button{
+  border:none;border-radius:999px;padding:10px 16px;
+  font-weight:700;cursor:pointer;background:var(--accent);
+}
+button.secondary{background:#ffffff22;color:var(--text)}
+button.good{background:var(--good); color:#06101b}
+button.danger{background:#ef444422;color:var(--text); border:1px solid #ef444455}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+.msg{
+  margin-top:14px;padding:12px;border-radius:14px;
+  border:1px solid var(--line);background:#00000033
+}
+.msg.ok{border-color:#22c55e55}
+.msg.warn{border-color:#fbbf2455}
+.msg.bad{border-color:#ef444455}
+
+.hidden{display:none !important}
+.badge{color:var(--muted);font-size:13px}
+.finalText{
+  white-space:pre-wrap;margin-top:10px;
+  background:#00000033;border:1px solid var(--line);
+  border-radius:14px;padding:12px
+}
+.helper{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px dashed rgba(255,255,255,.18);
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  line-height:1.35;
+  font-size: 14px;
+}
+.helper b{color: var(--text)}
+
+/* Nome + idade */
+.linha-aluno{
+  display:flex;
+  gap:12px;
+  margin-top:12px;
+}
+.linha-aluno .campo{flex:1;}
+@media (max-width: 700px){
+  .linha-aluno{flex-direction:column;}
+}
+
+/* Painel de Dicas */
+.tipsBox{
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.04);
+}
+.tipsTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.tipsTitle{font-weight:800;color: var(--text);}
+.tipsSmall{color:var(--muted);font-size:13px;}
+.tipsBtns{display:flex;gap:8px;flex-wrap:wrap;}
+.tipsBtns button{padding:8px 12px;font-weight:800;}
+.tipsList{
+  margin-top:10px;
+  padding-left:18px;
+  color: var(--muted);
+  line-height:1.35;
+}
+.oneTip{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.20);
+  color: var(--text);
+}
+.exampleTip{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.15);
+  color: var(--muted);
+  white-space:pre-wrap;
+  line-height:1.35;
+}
+.exampleTip b{color: var(--text);}
+
+/* Painel de análise online */
+.aiBox{
+  margin-top:14px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(56,189,248,.22);
+  background: rgba(56,189,248,.06);
+}
+.aiTop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.aiTitle{font-weight:900}
+.aiSmall{color:var(--muted);font-size:13px;line-height:1.35}
+.aiOut{
+  margin-top:10px;
+  white-space:pre-wrap;
+  background:#00000033;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  color:var(--text);
+}
+
+/* Painel histórico */
+.histBox{
+  margin-top:14px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(34,197,94,.18);
+  background: rgba(34,197,94,.06);
+}
+.histTop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.histTitle{font-weight:900}
+.histSmall{color:var(--muted);font-size:13px;line-height:1.35}
+.histList{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.histItem{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+}
+.histMeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  align-items:center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.histActions{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.smallBtn{
+  padding:8px 12px;
+  font-weight:800;
+}
+
+/* (Opcional) esconder textos técnicos */
+.pill { display:none; }
+
+.seal{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px;
+  background:rgba(34,197,94,.15);
+  border:1px solid rgba(34,197,94,.35);
+  color:#bbf7d0;
+  font-size:13px;
+  margin:8px 0 10px;
+}
+textarea[readonly]{
+  border-color:rgba(34,197,94,.55) !important;
+  background:rgba(255,255,255,.04);
+}
+
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <h1>Redação em 3 Missões</h1>
+      <div class="sub">Uma parte por vez. Você escreve, recebe uma dica rápida e continua 🙂</div>
+    </div>
+
+    <div class="content">
+      <div class="linha-aluno">
+        <div class="campo">
+          <label>Seu nome</label>
+          <input id="alunoNome" placeholder="Digite seu nome (ex.: Miguel)">
+        </div>
+
+        <div class="campo">
+          <label>Sua idade</label>
+          <input id="alunoIdade" type="number" min="6" max="18" placeholder="Ex.: 11">
+        </div>
+      </div>
+
+      <label>Tema (uma frase curtinha)</label>
+      <input id="tema" placeholder="Ex.: Um dia inesquecível / A amizade / A águia e a formiga">
+
+      <label>O que você vai escrever?</label>
+      <div class="btns" style="margin-top:6px">
+        <button type="button" class="secondary" id="btnHistoria">📖 Uma história</button>
+        <button type="button" class="secondary" id="btnRelato">📝 Algo que aconteceu comigo</button>
+        <button type="button" class="secondary" id="btnOpiniao">💬 O que eu penso sobre algo</button>
+        <span class="badge" id="tipoLabel">Escolha uma opção</span>
+      </div>
+
+      <div class="helper" id="helper">
+        <b>Dica:</b> escolha primeiro o tipo. Depois escreva o <b>Começo</b>.
+      </div>
+
+      <!-- DICAS -->
+      <div class="tipsBox" id="tipsBox">
+        <div class="tipsTop">
+          <div>
+            <div class="tipsTitle" id="tipsTitle">🎯 Dicas do COMEÇO</div>
+            <div class="tipsSmall" id="tipsSmall">Use só se quiser. Não é obrigação 🙂</div>
+          </div>
+          <div class="tipsBtns">
+            <button type="button" class="secondary" id="btnOneTip">💡 Me dê 1 dica</button>
+            <button type="button" class="secondary" id="btnExample">✨ Exemplo curtinho</button>
+          </div>
+        </div>
+        <ul class="tipsList" id="tipsList"></ul>
+        <div class="oneTip hidden" id="oneTip"></div>
+        <div class="exampleTip hidden" id="exampleTip"></div>
+      </div>
+
+      <div id="step1">
+        <label><b>COMEÇO</b></label>
+        
+        <div class="seal hidden" id="seal1">✅ Bloco concluído <span class="badge">(somente leitura)</span></div>
+<textarea id="comeco" placeholder="Escreva o começo aqui..."></textarea>
+      </div>
+
+      <div id="step2" class="hidden">
+        <label><b>MEIO</b></label>
+        
+        <div class="seal hidden" id="seal2">✅ Bloco concluído <span class="badge">(somente leitura)</span></div>
+<textarea id="meio" placeholder="Escreva o meio aqui..."></textarea>
+      </div>
+
+      <div id="step3" class="hidden">
+        <label><b>FINAL</b></label>
+        
+        <div class="seal hidden" id="seal3">✅ Bloco concluído <span class="badge">(somente leitura)</span></div>
+<textarea id="final" placeholder="Escreva o final aqui..."></textarea>
+      </div>
+
+      <div id="msg" class="msg hidden">
+        <b id="msgTitle"></b>
+        <div id="msgBody" class="badge"></div>
+      </div>
+
+      <div id="finish" class="hidden">
+        <div class="msg ok">
+          <b>Redação pronta! 🎉</b>
+          <div class="badge">Se quiser, você pode melhorar uma parte e clicar em “Finalizar” de novo.</div>
+        </div>
+        <div class="finalText" id="saida"></div>
+      </div>
+
+      <!-- AÇÕES PRINCIPAIS -->
+      <div class="btns">
+        <button type="button" id="btnValidar">✅ Validar etapa</button>
+        <button type="button" id="continuar" class="good" disabled>Continuar</button>
+        <button type="button" id="montar" class="secondary hidden">Finalizar</button>
+        <button type="button" id="limpar" class="secondary">Limpar</button>
+      </div>
+
+      <!-- ✅ ONLINE: análise via servidor -->
+      <div class="aiBox">
+        <div class="aiTop">
+          <div>
+            <div class="aiTitle">Análise com ChatGPT (via servidor local)</div>
+            <div class="aiSmall">Clique em “Analisar” para receber o feedback.</div>
+          </div>
+          <div class="btns" style="margin:0">
+            <button type="button" class="secondary" id="btnAnalise">🧠 Analisar</button>
+            <button type="button" class="secondary" id="btnCopiar">📋 Copiar texto</button>
+            <button type="button" class="danger" id="btnLimparAnalise">Limpar análise</button>
+          </div>
+        </div>
+        <div class="aiOut" id="saidaAnalise">Clique em “Analisar” para receber o feedback.</div>
+      </div>
+
+      <!-- ✅ HISTÓRICO -->
+      <div class="histBox">
+        <div class="histTop">
+          <div>
+            <div class="histTitle">Histórico (últimas redações)</div>
+            <div class="histSmall">Carrega automaticamente do banco. Clique em “Ver” para abrir a redação e a análise.</div>
+          </div>
+          <div class="btns" style="margin:0">
+            <button type="button" class="secondary smallBtn" id="btnAtualizarHist">🔄 Atualizar</button>
+            <button type="button" class="danger smallBtn" id="btnEsconderHist">👁️ Ocultar</button>
+          </div>
+        </div>
+
+        <div class="histList" id="histList">
+          <div class="histItem">
+            <div class="histMeta">Carregando histórico...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ===== CONFIG API =====
+const API_BASE = "http://localhost:3000";
+const API_ANALISAR = API_BASE + "/api/analisar";
+const API_ULTIMAS  = API_BASE + "/api/ultimas";
+const API_VALIDAR  = API_BASE + "/api/validar-etapa";
+
+// Defaults (se o Miguel não preencher, vai assim)
+const ALUNO_PADRAO = "Miguel";
+const IDADE_PADRAO = 11;
+
+let step = 1;             // 1=começo, 2=meio, 3=final
+let tipo = "";            // "historia" | "relato" | "opiniao"
+
+// ===== util =====
+function clean(s){ return (s||"").trim(); }
+function escapeHtml(s){
+  return (s ?? "").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+// ✅ REGRA DE OURO: idade só pode ser 6–18 (evita "62" sequestrando histórico)
+function getAlunoIdadeFromUI(){
+  const nomeEl  = $("alunoNome");
+  const idadeEl = $("alunoIdade");
+
+  const aluno = (nomeEl ? nomeEl.value.trim() : "") || ALUNO_PADRAO;
+
+  let idade = NaN;
+  if (idadeEl) idade = parseInt(idadeEl.value, 10);
+
+  if (!Number.isFinite(idade) || idade < 6 || idade > 18) {
+    idade = IDADE_PADRAO;
+  }
+
+  return { aluno, idade };
+}
+
+function saveAlunoToLocalStorage(aluno, idade){
+  try{
+    // Só salva idade válida
+    const idadeNum = parseInt(idade, 10);
+    if (!Number.isFinite(idadeNum) || idadeNum < 6 || idadeNum > 18) return;
+
+    localStorage.setItem("alunoNome", (aluno || "").toString());
+    localStorage.setItem("alunoIdade", String(idadeNum));
+  }catch{}
+}
+
+// ===== UI helpers =====
+function showMsg(kind,title,body){
+  const box = $("msg");
+  if(!box) return;
+  box.className = "msg " + kind;
+  box.classList.remove("hidden");
+  $("msgTitle").textContent = title || "";
+  $("msgBody").textContent = body || "";
+}
+function hideMsg(){
+  const box = $("msg");
+  if(box) box.classList.add("hidden");
+}
+
+function currentStageKey(){
+  return step === 1 ? "comeco" : step === 2 ? "meio" : "final";
+}
+function currentTextarea(){
+  if(step===1) return $("comeco");
+  if(step===2) return $("meio");
+  return $("final");
+}
+function hasTextInCurrentStep(){
+  const el = currentTextarea();
+  return !!(el && clean(el.value).length > 0);
+}
+
+// “Continuar” só pode habilitar se: tem texto + validação ok
+let lastValidationOk = false;
+
+function updateFinalizarVisibility(){
+  const btn = $("montar");
+  if(!btn) return;
+
+  if(step === 3 && lastValidationOk && hasTextInCurrentStep()){
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
+function refreshContinueState(){
+  const btn = $("continuar");
+  if(!btn) return;
+  btn.disabled = !(lastValidationOk && hasTextInCurrentStep());
+  updateFinalizarVisibility();
+}
+
+// ===== DICAS (LOCAL) =====
+const tipsDB = {
+  comeco: {
+    historia: {
+      title: "🎯 Dicas do COMEÇO (História)",
+      list: [
+        "Diga quem é o personagem.",
+        "Diga onde ele está.",
+        "Mostre o clima do lugar (calmo, misterioso, engraçado...).",
+        "Comece com uma frase que dá vontade de ler mais."
+      ],
+      one: [
+        "Comece com um detalhe do lugar: vento, barulho, cheiro, luz…",
+        "Dê um nome ao personagem (só o nome já melhora).",
+        "Use uma palavra que puxe curiosidade: “estranho”, “misterioso”, “brilhando”…"
+      ],
+      example: [
+        "Exemplo curtinho:\n“Num dia quente, Miguel viu uma entrada escura entre as pedras. Parecia uma caverna escondida.”",
+        "Exemplo curtinho:\n“Na rua vazia, um menino ouviu um barulho e percebeu que não estava sozinho.”"
+      ]
+    },
+    relato: {
+      title: "🎯 Dicas do COMEÇO (Relato)",
+      list: [
+        "Diga quando foi (ontem, sábado, de manhã...).",
+        "Diga onde foi (na escola, em casa...).",
+        "Diga com quem você estava.",
+        "Comece simples: uma frase que mostra a situação."
+      ],
+      one: [
+        "Coloque “quando + onde” na mesma frase.",
+        "Se quiser, já mostre um sentimento: “fiquei animado”, “fiquei nervoso”…"
+      ],
+      example: [
+        "Exemplo curtinho:\n“No sábado de manhã, no parque, eu estava com meu pai quando aconteceu uma coisa que eu não esperava.”",
+        "Exemplo curtinho:\n“Ontem na escola, eu estava com meus amigos e comecei a me sentir animado.”"
+      ]
+    },
+    opiniao: {
+      title: "🎯 Dicas do COMEÇO (Opinião)",
+      list: [
+        "Comece com “Eu acho que...” ou “Na minha opinião...”.",
+        "Diga sua ideia principal numa frase só.",
+        "Se quiser, explique rapidinho o motivo."
+      ],
+      one: [
+        "Uma frase direta é melhor do que tentar enfeitar.",
+        "Use “porque” só uma vez no começo."
+      ],
+      example: [
+        "Exemplo curtinho:\n“Na minha opinião, ler é importante porque ajuda a gente a aprender e imaginar.”",
+        "Exemplo curtinho:\n“Eu acho que cuidar do meio ambiente é necessário, porque o planeta é a nossa casa.”"
+      ]
+    }
+  },
+  meio: {
+    historia: {
+      title: "🎯 Dicas do MEIO (História)",
+      list: [
+        "Mostre um problema/dificuldade.",
+        "Use ligadores: “depois”, “então”, “em seguida”.",
+        "Conte 2 acontecimentos (não precisa ser longo).",
+        "Inclua uma pequena surpresa."
+      ],
+      one: [
+        "Pergunta que ajuda: “O que deu errado?”",
+        "Coloque um detalhe: barulho, sombra, luz…"
+      ],
+      example: [
+        "Exemplo curtinho:\n“De repente, eles ouviram passos. Em seguida, uma lanterna apareceu no escuro.”",
+        "Exemplo curtinho:\n“Então o mapa rasgou, e eles precisaram achar outro jeito de sair dali.”"
+      ]
+    },
+    relato: {
+      title: "🎯 Dicas do MEIO (Relato)",
+      list: [
+        "Conte em ordem (primeiro… depois…).",
+        "Diga como você se sentiu em algum momento.",
+        "Coloque um detalhe do lugar.",
+        "Mostre o que você fez."
+      ],
+      one: [
+        "Use 2 frases curtas em vez de 1 gigante.",
+        "Pergunta: “O que você fez quando isso aconteceu?”"
+      ],
+      example: [
+        "Exemplo curtinho:\n“Eu fiquei nervoso no começo, mas respirei fundo e tentei de novo. Aí deu certo.”",
+        "Exemplo curtinho:\n“Primeiro eu não entendi. Depois eu perguntei para a professora e fiquei mais tranquilo.”"
+      ]
+    },
+    opiniao: {
+      title: "🎯 Dicas do MEIO (Opinião)",
+      list: [
+        "Explique 1 ou 2 motivos.",
+        "Use “por exemplo” e dê um exemplo simples.",
+        "Se quiser, compare: “é melhor do que…”"
+      ],
+      one: [
+        "1 exemplo bom vale mais do que 3 exemplos fracos.",
+        "Use “por exemplo” só uma vez."
+      ],
+      example: [
+        "Exemplo curtinho:\n“Isso é importante porque melhora a vida das pessoas. Por exemplo, quando a rua é limpa, todo mundo se sente melhor.”"
+      ]
+    }
+  },
+  final: {
+    historia: {
+      title: "🎯 Dicas do FINAL (História)",
+      list: [
+        "Feche a história (o que aconteceu no final?).",
+        "Mostre a reação do personagem.",
+        "Se quiser, deixe uma frase final marcante."
+      ],
+      one: [
+        "Uma boa última frase pode ser curta.",
+        "Pergunta: “E depois disso, como ficou a vida dele?”"
+      ],
+      example: [
+        "Exemplo curtinho:\n“Ele saiu dali aliviado, como se tivesse vencido a parte mais difícil do dia.”",
+        "Exemplo curtinho:\n“E assim, ele entendeu que aquela aventura tinha mudado tudo.”"
+      ]
+    },
+    relato: {
+      title: "🎯 Dicas do FINAL (Relato)",
+      list: [
+        "Diga como terminou.",
+        "Diga como você se sentiu no fim.",
+        "Diga o que você aprendeu (uma frase)."
+      ],
+      one: [
+        "Use “Aprendi que...” para fechar bem.",
+        "Feche com paz, sem drama."
+      ],
+      example: [
+        "Exemplo curtinho:\n“No fim, eu fiquei aliviado. Aprendi que pedir ajuda é melhor do que ficar travado sozinho.”"
+      ]
+    },
+    opiniao: {
+      title: "🎯 Dicas do FINAL (Opinião)",
+      list: [
+        "Repita sua ideia principal com outras palavras (curto).",
+        "Dê uma sugestão: “por isso, devemos…”.",
+        "Feche com uma frase firme."
+      ],
+      one: [
+        "Não invente coisa nova no final — só feche bem.",
+        "Uma frase final forte pode começar com “Por isso...”"
+      ],
+      example: [
+        "Exemplo curtinho:\n“Por isso, eu acho que isso deveria ser levado a sério, porque faz diferença na vida das pessoas.”"
+      ]
+    }
+  }
+};
+
+let tipIndex = { comeco: 0, meio: 0, final: 0 };
+
+function getTipoKey(){ return tipo || "historia"; }
+
+function renderTips(){
+  const stage = currentStageKey();
+  const tkey = getTipoKey();
+  const pack = tipsDB[stage][tkey];
+
+  $("tipsTitle").textContent = pack.title;
+  $("tipsList").innerHTML = pack.list.map(x => `<li>${escapeHtml(x)}</li>`).join("");
+
+  $("oneTip").classList.add("hidden");
+  $("exampleTip").classList.add("hidden");
+  $("oneTip").textContent = "";
+  $("exampleTip").textContent = "";
+  $("tipsSmall").textContent = "Use só se quiser. Não é obrigação 🙂";
+}
+
+function showOneTip(){
+  const stage = currentStageKey();
+  const tkey = getTipoKey();
+  const pack = tipsDB[stage][tkey];
+  const i = tipIndex[stage] % pack.one.length;
+  tipIndex[stage]++;
+
+  $("oneTip").textContent = "💡 " + pack.one[i];
+  $("oneTip").classList.remove("hidden");
+}
+
+function showExample(){
+  const stage = currentStageKey();
+  const tkey = getTipoKey();
+  const pack = tipsDB[stage][tkey];
+  const ex = pack.example[Math.floor(Math.random()*pack.example.length)];
+
+  $("exampleTip").innerHTML =
+    "<b>✨ Exemplo curtinho (só pra inspirar):</b>\n" +
+    escapeHtml(ex.replace(/^Exemplo curtinho:\n/i,""));
+  $("exampleTip").classList.remove("hidden");
+}
+
+// ===== Tipo / helper =====
+function setHelperText(){
+  const helper = $("helper");
+  if(!helper) return;
+
+  if(!tipo){
+    helper.innerHTML = "<b>Dica:</b> escolha primeiro o tipo. Depois escreva o <b>Começo</b>.";
+    return;
+  }
+  if(tipo==="historia"){
+    helper.innerHTML = "<b>História:</b> conte como se fosse um filme. Use palavras como <b>depois</b> e <b>então</b>.";
+  } else if(tipo==="relato"){
+    helper.innerHTML = "<b>Relato:</b> diga <b>onde</b>, <b>quando</b> e <b>como você se sentiu</b>.";
+  } else {
+    helper.innerHTML = "<b>Opinião:</b> diga o que você pensa e explique. No meio, use <b>por exemplo</b>.";
+  }
+}
+
+function setTipoUI(tipoDb){
+  const t = (tipoDb || "").toLowerCase();
+  if(t.includes("relat")) {
+    tipo = "relato";
+    $("tipoLabel").textContent = "📝 Relato";
+    $("btnRelato").classList.add("good");
+    $("btnHistoria").classList.remove("good");
+    $("btnOpiniao").classList.remove("good");
+  } else if(t.includes("opini")) {
+    tipo = "opiniao";
+    $("tipoLabel").textContent = "💬 Opinião";
+    $("btnOpiniao").classList.add("good");
+    $("btnHistoria").classList.remove("good");
+    $("btnRelato").classList.remove("good");
+  } else {
+    tipo = "historia";
+    $("tipoLabel").textContent = "📖 História";
+    $("btnHistoria").classList.add("good");
+    $("btnRelato").classList.remove("good");
+    $("btnOpiniao").classList.remove("good");
+  }
+  setHelperText();
+  renderTips();
+}
+
+// ===== Etapas =====
+
+function repositionTips(){
+  const tips = $("tipsBox");
+  if(!tips) return;
+
+  if(step === 1){
+    const s = $("step1");
+    if(s) s.insertBefore(tips, s.firstChild);
+  } else if(step === 2){
+    const s = $("step2");
+    if(s) s.insertBefore(tips, s.firstChild);
+  } else if(step === 3){
+    const s = $("step3");
+    if(s) s.insertBefore(tips, s.firstChild);
+  }
+}
+
+
+function setStepVisibility(){
+  // Antes: só mostrava a etapa atual e escondia as outras.
+  // Agora (UX): mantém etapas anteriores visíveis em modo somente leitura,
+  // para o aluno não perder o fio da redação. (Sem mudar a lógica do programa.)
+
+  // Ao trocar de etapa, escondemos a área de “Redação pronta”
+  $("finish").classList.add("hidden");
+
+  // Visibilidade: mostra até a etapa atual
+  $("step1").classList.toggle("hidden", step < 1);
+  $("step2").classList.toggle("hidden", step < 2);
+  $("step3").classList.toggle("hidden", step < 3);
+
+  // Trava etapas anteriores e exibe selos
+  const lock = (taId, sealId, shouldLock) => {
+    const ta = $(taId);
+    const seal = $(sealId);
+    if(!ta) return;
+    if(shouldLock){
+      ta.setAttribute("readonly", "readonly");
+      seal?.classList.remove("hidden");
+    } else {
+      ta.removeAttribute("readonly");
+      seal?.classList.add("hidden");
+    }
+  };
+
+  lock("comeco","seal1", step >= 2);
+  lock("meio","seal2", step >= 3);
+  lock("final","seal3", false);
+
+  // quando muda de etapa, invalida validação anterior
+  lastValidationOk = false;
+  refreshContinueState();
+
+  renderTips();
+  updateFinalizarVisibility();
+
+  repositionTips();
+}
+
+
+function next(){
+  step = Math.min(3, step + 1);
+  hideMsg();
+  lastValidationOk = false;
+  refreshContinueState();
+  setStepVisibility();
+
+  setTimeout(()=>{
+    if(step===2) $("meio").focus();
+    if(step===3) $("final").focus();
+  }, 20);
+}
+
+function assembleText(){
+  const tema = clean($("tema").value);
+  const c = clean($("comeco").value);
+  const m = clean($("meio").value);
+  const f = clean($("final").value);
+
+  const texto = [c,m,f].filter(Boolean).join("\n\n");
+  const header = "Tema: " + (tema || "(sem tema)") + "\nTipo: " + (tipo || "(não escolhido)") + "\n\n";
+  return { tema, texto, full: header + texto };
+}
+
+function assemble(){
+  const data = assembleText();
+  $("saida").textContent = data.full;
+}
+
+function finish(){
+  assemble();
+  $("finish").classList.remove("hidden");
+
+  // UX: ao finalizar, mantém os 3 blocos visíveis e travados,
+  // para o aluno enxergar o texto completo + selos de concluído.
+  $("step1").classList.remove("hidden");
+  $("step2").classList.remove("hidden");
+  $("step3").classList.remove("hidden");
+
+  $("comeco")?.setAttribute("readonly","readonly");
+  $("meio")?.setAttribute("readonly","readonly");
+  $("final")?.setAttribute("readonly","readonly");
+
+  $("seal1")?.classList.remove("hidden");
+  $("seal2")?.classList.remove("hidden");
+  $("seal3")?.classList.remove("hidden");
+
+  updateFinalizarVisibility();
+}
+
+
+function resetAll(){
+  step = 1;
+  tipo = "";
+  $("tema").value = "";
+  $("comeco").value = "";
+  $("meio").value = "";
+  $("final").value = "";
+  $("tipoLabel").textContent = "Escolha uma opção";
+  $("btnHistoria").classList.remove("good");
+  $("btnRelato").classList.remove("good");
+  $("btnOpiniao").classList.remove("good");
+  hideMsg();
+
+  lastValidationOk = false;
+  refreshContinueState();
+
+  setHelperText();
+  setStepVisibility();
+  $("tema").focus();
+}
+
+// ===== Validação via servidor (IA) =====
+async function validarEtapaOnline(){
+  if(!tipo){
+    showMsg("warn","Escolha o tipo","Clique em 📖 História, 📝 Relato ou 💬 Opinião.");
+    lastValidationOk = false;
+    refreshContinueState();
+    return;
+  }
+
+  const tema = clean($("tema").value);
+  if(tema.length < 3){
+    showMsg("warn","Falta o tema","Escreva um tema curtinho antes de validar.");
+    lastValidationOk = false;
+    refreshContinueState();
+    return;
+  }
+
+  const el = currentTextarea();
+  const textoEtapa = clean(el.value);
+
+  // ✅ se não escreveu nada, não libera continuar nunca
+  if(!textoEtapa){
+    showMsg("warn","Escreva algo primeiro","Digite pelo menos uma frase antes de validar 🙂");
+    lastValidationOk = false;
+    refreshContinueState();
+    return;
+  }
+
+  const { aluno, idade } = getAlunoIdadeFromUI();
+  saveAlunoToLocalStorage(aluno, idade);
+
+  const btn = $("btnValidar");
+  btn.disabled = true;
+
+  try{
+    const resp = await fetch(API_VALIDAR, {
+      method: "POST",
+      headers: {"Content-Type":"application/json; charset=utf-8"},
+      body: JSON.stringify({
+        aluno,
+        idade,
+        tipo,
+        tema,
+        etapa: currentStageKey(),     // "comeco" | "meio" | "final"
+        textoEtapa
+      })
+    });
+
+    const data = await resp.json().catch(()=> ({}));
+    if(!resp.ok){
+      throw new Error(data?.details || data?.error || ("HTTP " + resp.status));
+    }
+
+    if(data.ok){
+      showMsg("ok", data.titulo || "Muito bem!", data.mensagem || "Pode continuar 🙂");
+      lastValidationOk = true;
+    }else{
+      showMsg("warn", data.titulo || "Quase lá", data.mensagem || "Tente melhorar um pouquinho.");
+      lastValidationOk = false;
+    }
+
+    refreshContinueState();
+
+  }catch(e){
+    showMsg("bad","Erro ao validar","Detalhe: " + (e.message || String(e)));
+    lastValidationOk = false;
+    refreshContinueState();
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// Se o aluno alterar o texto depois de validar, trava “Continuar” até validar de novo.
+function onTextChanged(){
+  lastValidationOk = false;
+  refreshContinueState();
+  updateFinalizarVisibility();
+}
+
+// ===== ONLINE: Análise via servidor (salva no banco) =====
+async function analisarOnline(){
+  const btn = $("btnAnalise");
+  const out = $("saidaAnalise");
+
+  const { texto, tema } = assembleText();
+  if(!texto.trim()){
+    out.textContent = "Escreva pelo menos o COMEÇO antes de analisar 🙂";
+    return;
+  }
+
+  const { aluno, idade } = getAlunoIdadeFromUI();
+  saveAlunoToLocalStorage(aluno, idade);
+
+  btn.disabled = true;
+  out.textContent = "Analisando...";
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+
+  try{
+    const resp = await fetch(API_ANALISAR, {
+      method: "POST",
+      headers: {"Content-Type":"application/json; charset=utf-8"},
+      body: JSON.stringify({
+        aluno,
+        idade,
+        tipo: tipo || "não definido",
+        tema: tema || "",
+        texto
+      }),
+      signal: controller.signal
+    });
+
+    const data = await resp.json().catch(()=> ({}));
+    if(!resp.ok){
+      const msg = data?.details || data?.error || ("HTTP " + resp.status);
+      throw new Error(msg);
+    }
+
+    out.textContent = data.review || data.text || JSON.stringify(data, null, 2);
+    await carregarHistorico();
+
+  }catch(e){
+    out.textContent =
+      "Erro ao analisar.\n\n" +
+      "1) Confirme que o servidor está rodando na porta 3000.\n" +
+      "2) Confirme que existe POST /api/analisar.\n\n" +
+      "Detalhe: " + (e.name === "AbortError" ? "Tempo esgotado (timeout)." : e.message);
+  }finally{
+    clearTimeout(timer);
+    btn.disabled = false;
+  }
+}
+
+// ===== HISTÓRICO =====
+function fmtData(sqliteDate){
+  if(!sqliteDate) return "";
+  const d = sqliteDate.replace(" ", "T") + "Z";
+  const dt = new Date(d);
+  if(Number.isNaN(dt.getTime())) return sqliteDate;
+  return dt.toLocaleString("pt-BR");
+}
+
+function preencherComTexto(texto){
+  $("comeco").value = texto || "";
+  $("meio").value = "";
+  $("final").value = "";
+  step = 1;
+  setStepVisibility();
+  hideMsg();
+
+  lastValidationOk = false;
+  refreshContinueState();
+
+  $("comeco").focus();
+}
+
+async function carregarHistorico(){
+  const list = $("histList");
+  list.innerHTML = `
+    <div class="histItem">
+      <div class="histMeta">Carregando histórico...</div>
+    </div>
+  `;
+
+  try{
+    const { aluno, idade } = getAlunoIdadeFromUI();
+    const url = `${API_ULTIMAS}?aluno=${encodeURIComponent(aluno)}&idade=${encodeURIComponent(idade)}&limit=20`;
+
+    const resp = await fetch(url, { method:"GET" });
+    const data = await resp.json().catch(()=> ([]));
+    if(!resp.ok) throw new Error("HTTP " + resp.status);
+
+    if(!Array.isArray(data) || data.length === 0){
+      list.innerHTML = `
+        <div class="histItem">
+          <div class="histMeta">Ainda não tem redações salvas para <b>${escapeHtml(aluno)}</b> (idade ${idade}). Faça uma análise para aparecer aqui 🙂</div>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = data.map(item => {
+      const id = item.id;
+      const tema = item.tema || "(sem tema)";
+      const tipoDb = item.tipo || "(sem tipo)";
+      const created = fmtData(item.created_at);
+      const texto = item.texto_original || "";
+      const review = item.review || "";
+
+      return `
+        <div class="histItem" data-id="${id}">
+          <div class="histMeta">
+            <span>🆔 ${id}</span>
+            <span>📅 ${escapeHtml(created)}</span>
+            <span>🏷️ ${escapeHtml(tipoDb)}</span>
+            <span>🧩 Tema: ${escapeHtml(tema)}</span>
+          </div>
+
+          <div class="histActions">
+            <button type="button" class="secondary smallBtn" data-action="ver" data-id="${id}">👀 Ver</button>
+            <button type="button" class="secondary smallBtn" data-action="carregar" data-id="${id}">📝 Carregar no editor</button>
+          </div>
+
+          <div class="aiOut hidden" id="histOut-${id}"></div>
+
+          <textarea class="hidden" id="histTexto-${id}">${escapeHtml(texto)}</textarea>
+          <textarea class="hidden" id="histReview-${id}">${escapeHtml(review)}</textarea>
+          <textarea class="hidden" id="histTema-${id}">${escapeHtml(item.tema || "")}</textarea>
+          <textarea class="hidden" id="histTipo-${id}">${escapeHtml(item.tipo || "")}</textarea>
+        </div>
+      `;
+    }).join("");
+
+  }catch(e){
+    list.innerHTML = `
+      <div class="histItem">
+        <div class="histMeta">Não consegui carregar o histórico. Verifique se o servidor está rodando.</div>
+        <div class="histMeta">Detalhe: ${escapeHtml(e.message)}</div>
+      </div>
+    `;
+  }
+}
+
+// ===== Events =====
+$("btnOneTip")?.addEventListener("click", showOneTip);
+$("btnExample")?.addEventListener("click", showExample);
+
+$("btnHistoria")?.addEventListener("click", ()=>{
+  tipo="historia";
+  $("tipoLabel").textContent = "📖 História";
+  $("btnHistoria").classList.add("good");
+  $("btnRelato").classList.remove("good");
+  $("btnOpiniao").classList.remove("good");
+  setHelperText();
+  hideMsg();
+  renderTips();
+
+  lastValidationOk = false;
+  refreshContinueState();
+});
+$("btnRelato")?.addEventListener("click", ()=>{
+  tipo="relato";
+  $("tipoLabel").textContent = "📝 Relato";
+  $("btnRelato").classList.add("good");
+  $("btnHistoria").classList.remove("good");
+  $("btnOpiniao").classList.remove("good");
+  setHelperText();
+  hideMsg();
+  renderTips();
+
+  lastValidationOk = false;
+  refreshContinueState();
+});
+$("btnOpiniao")?.addEventListener("click", ()=>{
+  tipo="opiniao";
+  $("tipoLabel").textContent = "💬 Opinião";
+  $("btnOpiniao").classList.add("good");
+  $("btnHistoria").classList.remove("good");
+  $("btnRelato").classList.remove("good");
+  setHelperText();
+  hideMsg();
+  renderTips();
+
+  lastValidationOk = false;
+  refreshContinueState();
+});
+
+$("btnValidar")?.addEventListener("click", validarEtapaOnline);
+$("continuar")?.addEventListener("click", next);
+
+$("montar")?.addEventListener("click", ()=>{
+  // só finaliza se estiver na etapa 3 e com validação ok
+  if(step !== 3){
+    showMsg("warn","Ainda não","Escreva o final antes de finalizar.");
+    return;
+  }
+  if(!lastValidationOk){
+    showMsg("warn","Valide o final","Clique em “Validar etapa” antes de finalizar 🙂");
+    return;
+  }
+  if(!hasTextInCurrentStep()){
+    showMsg("warn","Escreva o final","Digite o final antes de finalizar 🙂");
+    return;
+  }
+  finish();
+});
+
+$("limpar")?.addEventListener("click", resetAll);
+
+$("btnAnalise")?.addEventListener("click", analisarOnline);
+
+$("btnCopiar")?.addEventListener("click", async ()=>{
+  const { full } = assembleText();
+  try{
+    await navigator.clipboard.writeText(full);
+    $("saidaAnalise").textContent = "Texto copiado para a área de transferência ✅";
+  }catch{
+    $("saidaAnalise").textContent = "Não consegui copiar automaticamente. Selecione o texto e copie manualmente.";
+  }
+});
+
+$("btnLimparAnalise")?.addEventListener("click", ()=>{
+  $("saidaAnalise").textContent = "Clique em “Analisar” para receber o feedback.";
+});
+
+$("btnAtualizarHist")?.addEventListener("click", carregarHistorico);
+
+$("btnEsconderHist")?.addEventListener("click", ()=>{
+  const list = $("histList");
+  const btn = $("btnEsconderHist");
+  const hidden = list.classList.toggle("hidden");
+  btn.textContent = hidden ? "👁️ Mostrar" : "👁️ Ocultar";
+});
+
+$("histList")?.addEventListener("click", (e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+
+  const action = btn.getAttribute("data-action");
+  const id = btn.getAttribute("data-id");
+  if(!id) return;
+
+  const out = $("histOut-" + id);
+  const texto = $("histTexto-" + id)?.value || "";
+  const review = $("histReview-" + id)?.value || "";
+  const tema = $("histTema-" + id)?.value || "";
+  const tipoDb = $("histTipo-" + id)?.value || "";
+
+  if(action === "ver"){
+    const isHidden = out.classList.contains("hidden");
+    if(isHidden){
+      out.classList.remove("hidden");
+      out.textContent =
+        `TEMA: ${tema || "(sem tema)"}\n` +
+        `TIPO: ${tipoDb || "(sem tipo)"}\n\n` +
+        `TEXTO:\n${texto}\n\n` +
+        `ANÁLISE:\n${review}`;
+      btn.textContent = "🙈 Fechar";
+    }else{
+      out.classList.add("hidden");
+      out.textContent = "";
+      btn.textContent = "👀 Ver";
+    }
+  }
+
+  if(action === "carregar"){
+    $("tema").value = tema || "";
+    setTipoUI(tipoDb);
+    preencherComTexto(texto);
+    $("saidaAnalise").textContent = review || "Clique em “Analisar” para receber o feedback.";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+// Texto mudou => trava continuar até validar de novo
+["tema","comeco","meio","final"].forEach(id=>{
+  const el = $(id);
+  if(el){
+    el.addEventListener("input", onTextChanged);
+    el.addEventListener("change", onTextChanged);
+  }
+});
+
+// mudar aluno/idade => salva e recarrega histórico
+$("alunoNome")?.addEventListener("change", ()=>{
+  const {aluno,idade}=getAlunoIdadeFromUI();
+  saveAlunoToLocalStorage(aluno,idade);
+  carregarHistorico();
+});
+$("alunoIdade")?.addEventListener("change", ()=>{
+  const {aluno,idade}=getAlunoIdadeFromUI();
+  saveAlunoToLocalStorage(aluno,idade);
+  carregarHistorico();
+});
+
+// ===== init =====
+setHelperText();
+setStepVisibility();
+renderTips();
+
+// Carrega nome/idade salvos (com validação)
+try{
+  const n = localStorage.getItem("alunoNome") || "";
+  const i = parseInt(localStorage.getItem("alunoIdade") || "", 10);
+
+  $("alunoNome").value = n;
+  $("alunoIdade").value = (Number.isFinite(i) && i >= 6 && i <= 18) ? String(i) : "";
+}catch{}
+
+$("tema")?.focus();
+carregarHistorico();
+refreshContinueState();
+updateFinalizarVisibility();
+</script>
+
+
+</body>
+</html>
