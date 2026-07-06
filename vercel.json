@@ -1,5 +1,17 @@
 {
+  "functions": {
+    "api/index.js": {
+      "includeFiles": [
+        "index.html",
+        "interpretacao.html",
+        "interpretacao v8.html",
+        "interpretacao_v6_backend.html"
+      ]
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" }
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/", "destination": "/api/index.js" },
+    { "source": "/index.html", "destination": "/api/index.js" }
   ]
 }
