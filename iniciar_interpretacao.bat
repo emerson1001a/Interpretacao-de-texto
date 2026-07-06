@@ -5,19 +5,24 @@ echo ===============================
 echo Iniciando servidor...
 echo ===============================
 
-cd /d "C:\RedacaoMiguelGPT\backend"
+cd /d "%~dp0"
 
-if not exist server.js (
-    echo ERRO: server.js nao encontrado.
+if not exist package.json (
+    echo ERRO: package.json nao encontrado.
     pause
     exit
 )
 
-start "Servidor Node" cmd /k "node server.js"
+if not exist node_modules (
+    echo Instalando dependencias...
+    npm install
+)
+
+start "Interpretacao Backend" cmd /k "npm start"
 
 timeout /t 3 >nul
 
-start "" "C:\Interpretacao_de_textos\interpretacao.html"
+start "" "http://localhost:3000/index.html"
 
 echo.
 echo Servidor iniciado.

@@ -1,0 +1,15 @@
+{
+  "name": "interpretacao-de-texto",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Aplicativo independente para atividades de interpretacao de texto.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
+  }
+}

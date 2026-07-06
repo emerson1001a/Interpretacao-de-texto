@@ -99,7 +99,7 @@
       </div>
 
       <p class="note" style="margin-top:10px">
-        Este HTML chama o backend do RedaçãoMiguelGPT no mesmo host. Se o servidor estiver em outra porta, ajuste <code>API_BASE</code> no script.
+        Este HTML chama o backend proprio do projeto de interpretacao. Se abrir como arquivo local, mantenha o servidor em <code>localhost:3000</code>.
       </p>
     </section>
 
@@ -164,7 +164,7 @@
 </div>
 
 <script>
-const API_BASE = "http://localhost:3000";
+const API_BASE = location.protocol.startsWith("http") ? location.origin : "http://localhost:3000";
 
   const el = (id) => document.getElementById(id);
 
