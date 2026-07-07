@@ -61,7 +61,7 @@
 <body>
 <header>
   <h1>Interpretação de Texto</h1>
-  <p>Fluxo: Preparar → Iniciar (texto aparece + cronômetro) → Finalizar leitura (para + gera perguntas) → Tempo por questão → Feedback + Área da professora (PIN 1234).</p>
+  <p id="headerCopy">Fluxo: Preparar → Iniciar (texto aparece + cronômetro) → Finalizar leitura (para + gera perguntas) → Tempo por questão → Feedback.</p>
 </header>
 
 <main>
@@ -149,6 +149,9 @@
 
       <h2>Feedback do aluno</h2>
       <pre id="studentFeedback">—</pre>
+      <div class="btnrow" style="margin-top:12px;justify-content:flex-start;">
+        <button id="btnReturnPortal" class="blue" style="display:none;">Entregar para o adulto</button>
+      </div>
     </section>
   </div>
 </main>
@@ -182,6 +185,14 @@
 
 <script>
   const API_BASE = location.protocol.startsWith("http") ? location.origin : "http://localhost:3001";
+  const params = new URLSearchParams(window.location.search);
+  const portal = {
+    childId: params.get("child_id") || "",
+    childName: params.get("child_name") || "",
+    token: params.get("portal_event_token") || "",
+    returnUrl: params.get("portal_return_url") || ""
+  };
+  portal.enabled = Boolean(portal.token && portal.returnUrl);
 
   const el = (id) => document.getElementById(id);
 
@@ -204,8 +215,77 @@
     fontSize: 18,
     guideTimer: null,
     guideOptionalSeen: false,
-    guideLengthSeen: false
+    guideLengthSeen: false,
+    portalEventSaved: false,
+    lastFeedback: "",
+    lastMetrics: {}
   };
+
+  function portalReturnUrl(status = "activity_saved") {
+    if (!portal.returnUrl) return "";
+    const url = new URL(portal.returnUrl);
+    url.searchParams.set("portal_status", status);
+    url.searchParams.set("service", "interpretacao");
+    if (portal.childId) url.searchParams.set("child_id", portal.childId);
+    return url.toString();
+  }
+
+  function returnToPortal(status = "activity_saved") {
+    const url = portalReturnUrl(status);
+    if (url) window.location.href = url;
+  }
+
+  async function sendPortalEvent() {
+    if (!portal.enabled || state.portalEventSaved) return false;
+    const returnUrl = new URL(portal.returnUrl);
+    const correctMcq = state.submittedAnswers.filter((item) => item && item.tipo === "mcq" && item.correta === 1).length;
+    const totalMcq = state.submittedAnswers.filter((item) => item && item.tipo === "mcq").length;
+    const response = await fetch(`${returnUrl.origin}/api/activity-events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Portal-Activity-Token": portal.token
+      },
+      body: JSON.stringify({
+        portal_event_token: portal.token,
+        service: "interpretacao",
+        activity_type: "leitura_com_perguntas",
+        title: el("theme").value.trim() || "Interpretação de texto",
+        duration_ms: state.readTimeMs,
+        metrics: {
+          reading_time_ms: state.readTimeMs,
+          question_times_ms: state.qTimesMs,
+          total_questions: state.questions.length,
+          mcq_correct: correctMcq,
+          mcq_total: totalMcq,
+          session_id: state.leituraId
+        },
+        feedback: {
+          child: {
+            tone: "positive",
+            message: state.lastFeedback || "",
+            next_step: "Entregar a atividade para o adulto acompanhar no portal."
+          },
+          adult: {
+            summary: state.lastFeedback || "",
+            strengths: [],
+            attention_points: [],
+            recipe: state.lastFeedback ? [state.lastFeedback] : [],
+            avoid_saying: ["Não transforme o tempo ou erro em bronca. Use como pista para o próximo treino."]
+          }
+        },
+        artifacts: {
+          text: state.textHidden,
+          questions: state.questions,
+          answers: state.submittedAnswers.filter(Boolean)
+        }
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok === false) throw new Error(result.message || "Não foi possível enviar ao portal.");
+    state.portalEventSaved = true;
+    return true;
+  }
 
   function setStep(stage){
     state.stage = stage;
@@ -560,6 +640,7 @@
 
   async function finishAndFeedback(){
     setStep(4);
+    el("btnReturnPortal").style.display = "none";
     try{
       const fin = await api("/api/leitura/finish", {
         leitura_id: state.leituraId,
@@ -570,6 +651,8 @@
         aluno: el("studentName").value.trim(),
         idade: Number(el("age").value||11)
       });
+      state.lastFeedback = fin.feedback || "";
+      state.lastMetrics = fin.metrics || {};
       el("studentFeedback").textContent =
 `Sessão: ${state.leituraId}
 
@@ -581,6 +664,16 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
 
 📊 MCQ: ${(fin.metrics && fin.metrics.mcq_score!=null) ? (fin.metrics.mcq_score + "/" + fin.metrics.mcq_max) : "—"}
 `;
+      if (portal.enabled) {
+        try {
+          await sendPortalEvent();
+          el("btnReturnPortal").style.display = "inline-flex";
+          el("studentFeedback").textContent += "\n\nAtividade registrada no Portal Educacional. Entregue para o adulto acompanhar.";
+        } catch (portalError) {
+          el("btnReturnPortal").style.display = "inline-flex";
+          el("studentFeedback").textContent += `\n\nA atividade ficou pronta, mas ainda não consegui registrar no portal: ${portalError.message}`;
+        }
+      }
       updateGuide();
     } catch(e){
       alert("Erro ao gerar feedback: " + (e.message||e));
@@ -593,9 +686,10 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     state.textHidden=""; state.questions=[]; state.answers={}; state.submittedAnswers=[]; state.mcqKeys={};
     state.readingStartMs=null; state.readTimeMs=null; state.qIndex=-1; state.qTimesMs=[];
     state.guideOptionalSeen=false; state.guideLengthSeen=false;
+    state.portalEventSaved=false; state.lastFeedback=""; state.lastMetrics={};
     stopReadTimer(); stopQuestionTimer();
 
-    el("studentName").value="";
+    if(!portal.enabled) el("studentName").value="";
     el("age").value="11";
     el("theme").value="";
     el("length").value="medio";
@@ -604,6 +698,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     el("kpiQ").textContent="—";
     el("kpiSess").textContent="—";
     el("studentFeedback").textContent="—";
+    el("btnReturnPortal").style.display = "none";
     el("questions").textContent="Finalize a leitura para iniciar as perguntas.";
     showText(false);
     setStep(0);
@@ -765,6 +860,7 @@ host.onclick = async (ev) => {
   el("btnFinishRead").onclick = finishRead;
   el("btnNext").onclick = nextQuestion;
   el("btnFinish").onclick = finishAndFeedback;
+  el("btnReturnPortal").onclick = () => returnToPortal(state.portalEventSaved ? "activity_saved" : "activity_pending");
 
   el("btnTeacher").onclick = openTeacher;
   el("btnClose").onclick = closeTeacher;
@@ -790,8 +886,20 @@ host.onclick = async (ev) => {
     updateGuide();
   });
 
+  function setupPortalMode(){
+    if(!portal.enabled) return;
+    if(portal.childName) el("studentName").value = portal.childName;
+    el("btnTeacher").style.display = "none";
+    el("headerCopy").textContent = "Faça a leitura com calma, responda às perguntas e depois entregue a atividade para o adulto acompanhar no Portal.";
+    el("guideText").textContent = portal.childName
+      ? `${portal.childName}, confira sua idade e clique em Preparar atividade.`
+      : "Confira seu nome e idade e clique em Preparar atividade.";
+  }
+
   applyFont();
+  setupPortalMode();
   resetAll();
+  setupPortalMode();
   setButtons();
 </script>
 </body>
