@@ -18,6 +18,15 @@
   .card h2{margin:0 0 10px;font-size:14px}
   label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
   input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);outline:none;background:#fff;font-size:14px}
+  input.guide-active,select.guide-active,textarea.guide-active{border-color:#f59e0b;background:#fff7ed;box-shadow:0 0 0 4px rgba(245,158,11,.20),0 12px 24px rgba(245,158,11,.14)}
+  button.guide-active{background:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,.22),0 14px 28px rgba(249,115,22,.20);transform:translateY(-1px)}
+  .guide-done{border-color:#86efac!important;background:#f0fdf4!important}
+  .guide-ghost{background:#f8fafc!important;border-color:#e5e7eb!important;color:#7b8496!important;opacity:.72}
+  button.guide-ghost{background:#eef1fb!important;color:#7b8496!important;opacity:.70}
+  .guide-done{border-color:#86efac!important;background:#f0fdf4!important;color:#14532d!important;opacity:1!important}
+  .readbox.guide-active,.q.guide-active,#studentFeedback.guide-active{border-color:#38bdf8;background:#f0f9ff;box-shadow:0 0 0 4px rgba(56,189,248,.18),0 14px 28px rgba(14,165,233,.14)}
+  .guidePanel{margin:0 0 12px;padding:10px 12px;border-radius:16px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;font-size:13px;line-height:1.35}
+  .guidePanel strong{display:block;color:#7c2d12;margin-bottom:2px}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
   button{border:0;border-radius:14px;padding:10px 12px;cursor:pointer;font-weight:750;background:var(--accent);color:#fff;font-size:13px}
@@ -59,6 +68,11 @@
   <div class="grid">
     <section class="card">
       <h2>Início</h2>
+
+      <div id="guidePanel" class="guidePanel">
+        <strong>Agora</strong>
+        <span id="guideText">Escreva o nome do aluno.</span>
+      </div>
 
       <label>Nome do aluno *</label>
       <input id="studentName" placeholder="Ex: Miguel"/>
@@ -104,7 +118,7 @@
 
     <section class="card">
       <h2>Leitura</h2>
-      <div class="readbox">
+      <div class="readbox" id="readPanel">
         <div class="readmeta">
           <div class="left">
             <button id="btnStartRead" class="blue" disabled>Iniciar (mostrar texto)</button>
@@ -187,7 +201,10 @@
     answers: {},
     submittedAnswers: [],
     mcqKeys: {},
-    fontSize: 18
+    fontSize: 18,
+    guideTimer: null,
+    guideOptionalSeen: false,
+    guideLengthSeen: false
   };
 
   function setStep(stage){
@@ -205,6 +222,86 @@
     const name = el("studentName").value.trim();
     const age = Number(el("age").value||0);
     return !!name && age>=6 && age<=18;
+  }
+
+  function nameReady(){
+    return el("studentName").value.trim().length >= 2;
+  }
+
+  function ageReady(){
+    const age = Number(el("age").value||0);
+    return age>=6 && age<=18;
+  }
+
+  function currentGuide(){
+    const themeReady = el("theme").value.trim().length > 0 || state.guideOptionalSeen;
+    const reading = state.readingStartMs !== null && state.readTimeMs === null;
+
+    if(!nameReady()) return { id:"name", text:"Escreva o nome do aluno." };
+    if(!ageReady()) return { id:"age", text:"Informe a idade entre 6 e 18 anos." };
+    if(!state.prepared && !themeReady) return { id:"theme", text:"Se quiser, escreva um tema. Se não quiser, siga para o tamanho do texto." };
+    if(!state.prepared && !state.guideLengthSeen) return { id:"length", text:"Confira o tamanho do texto. Você pode manter como está." };
+    if(!state.prepared) return { id:"prepare", text:"Agora clique em Preparar atividade." };
+    if(state.prepared && state.readingStartMs === null && state.readTimeMs === null) return { id:"startRead", text:"Clique em Iniciar para mostrar o texto." };
+    if(reading) return { id:"finishRead", text:"Leia com atenção. Quando terminar, clique em Finalizar leitura." };
+    if(state.readTimeMs !== null && state.questions.length && state.qIndex >= 0 && state.qIndex < state.questions.length) return { id:"answer", text:"Responda esta pergunta e clique em Próxima." };
+    if(state.readTimeMs !== null && state.questions.length && state.qIndex === state.questions.length) return { id:"finish", text:"Você respondeu tudo. Clique em Finalizar e ver feedback." };
+    if(state.stage >= 4) return { id:"feedback", text:"Leia o feedback com calma." };
+    return { id:"prepare", text:"Agora clique em Preparar atividade." };
+  }
+
+  function setGuideClass(ids, className){
+    ids.forEach((id)=>{
+      const node = el(id);
+      if(node) node.classList.add(className);
+    });
+  }
+
+  function clearGuideClasses(){
+    ["studentName","age","theme","length","btnPrepare","btnStartRead","btnFinishRead","questions","btnNext","btnFinish","studentFeedback","readPanel"].forEach((id)=>{
+      const node = el(id);
+      if(node) node.classList.remove("guide-active","guide-done","guide-ghost");
+    });
+  }
+
+  function updateGuide(){
+    clearGuideClasses();
+    const guide = currentGuide();
+    const map = {
+      name:["studentName"],
+      age:["age"],
+      theme:["theme"],
+      length:["length"],
+      prepare:["btnPrepare"],
+      startRead:["readPanel","btnStartRead"],
+      finishRead:["readPanel","btnFinishRead"],
+      answer:["questions","btnNext"],
+      finish:["btnFinish"],
+      feedback:["studentFeedback"]
+    };
+
+    const allTargets = Object.values(map).flat();
+    setGuideClass(allTargets, "guide-ghost");
+    if(nameReady()) setGuideClass(["studentName"], "guide-done");
+    if(ageReady()) setGuideClass(["age"], "guide-done");
+    if(el("theme").value.trim().length > 0 || state.guideOptionalSeen) setGuideClass(["theme"], "guide-done");
+    if(state.guideLengthSeen || state.prepared) setGuideClass(["length"], "guide-done");
+    if(state.prepared) setGuideClass(["btnPrepare"], "guide-done");
+    if(state.readingStartMs !== null || state.readTimeMs !== null) setGuideClass(["btnStartRead"], "guide-done");
+    if(state.readTimeMs !== null) setGuideClass(["readPanel","btnFinishRead"], "guide-done");
+    if(state.readTimeMs !== null && state.questions.length && state.qIndex === state.questions.length) setGuideClass(["questions","btnNext"], "guide-done");
+
+    setGuideClass(map[guide.id] || [], "guide-active");
+    (map[guide.id] || []).forEach((id)=>{
+      const node = el(id);
+      if(node) node.classList.remove("guide-ghost");
+    });
+    el("guideText").textContent = guide.text;
+  }
+
+  function scheduleGuide(){
+    if(state.guideTimer) clearTimeout(state.guideTimer);
+    state.guideTimer = setTimeout(updateGuide, 800);
   }
 
   function showText(visible){
@@ -227,6 +324,7 @@
     const canAnswer = state.readTimeMs !== null && state.questions.length>0;
     el("btnNext").disabled = !(canAnswer && state.qIndex>=0 && state.qIndex < state.questions.length);
     el("btnFinish").disabled = !(canAnswer && state.qIndex===state.questions.length);
+    updateGuide();
   }
 
   function formatMs(ms){
@@ -278,7 +376,7 @@
 
     const q = state.questions[state.qIndex];
     const wrap=document.createElement("div");
-    wrap.className="q";
+    wrap.className="q guide-active";
 
     const h=document.createElement("h3");
     h.textContent=`Q${state.qIndex+1}/${state.questions.length}. ${q.prompt || "(pergunta)"}`;
@@ -291,13 +389,13 @@
       const sel=document.createElement("select");
       sel.innerHTML = `<option value="">Selecione...</option>` + q.options.map(o=>`<option>${o}</option>`).join("");
       sel.value = state.answers["q"+state.qIndex] || "";
-      sel.onchange=()=> state.answers["q"+state.qIndex]=sel.value;
+      sel.onchange=()=>{ state.answers["q"+state.qIndex]=sel.value; updateGuide(); };
       wrap.appendChild(sel);
     } else {
       const ta=document.createElement("textarea");
       ta.placeholder="Digite sua resposta...";
       ta.value = state.answers["q"+state.qIndex] || "";
-      ta.oninput=()=> state.answers["q"+state.qIndex]=ta.value;
+      ta.oninput=()=>{ state.answers["q"+state.qIndex]=ta.value; scheduleGuide(); };
       wrap.appendChild(ta);
     }
 
@@ -363,6 +461,7 @@
       alert("Erro ao preparar: " + (e.message||e));
     } finally{
       el("btnPrepare").disabled=false;
+      setButtons();
     }
   }
 
@@ -482,8 +581,10 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
 
 📊 MCQ: ${(fin.metrics && fin.metrics.mcq_score!=null) ? (fin.metrics.mcq_score + "/" + fin.metrics.mcq_max) : "—"}
 `;
+      updateGuide();
     } catch(e){
       alert("Erro ao gerar feedback: " + (e.message||e));
+      updateGuide();
     }
   }
 
@@ -491,6 +592,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     state.prepared=false; state.stage=0; state.leituraId=null;
     state.textHidden=""; state.questions=[]; state.answers={}; state.submittedAnswers=[]; state.mcqKeys={};
     state.readingStartMs=null; state.readTimeMs=null; state.qIndex=-1; state.qTimesMs=[];
+    state.guideOptionalSeen=false; state.guideLengthSeen=false;
     stopReadTimer(); stopQuestionTimer();
 
     el("studentName").value="";
@@ -577,7 +679,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
 
     const formatMs2 = (ms) => (ms==null ? "—" : (Math.round(ms/1000)+"s"));
 
-    
+
     const rows = sessoes.map(s=>{
       const preview = (s.feedback || "").toString().replace(/\s+/g," ").slice(0,90);
       return `
@@ -669,6 +771,24 @@ host.onclick = async (ev) => {
   el("btnOpenTeacher").onclick = openTeacherReport;
 
   el("modalBack").addEventListener("click", function(e){ if(e.target === this) closeTeacher(); });
+  ["studentName","age","theme"].forEach((id)=>{
+    el(id).addEventListener("input", scheduleGuide);
+    el(id).addEventListener("focus", updateGuide);
+  });
+  el("theme").addEventListener("blur", ()=>{
+    state.guideOptionalSeen = true;
+    updateGuide();
+  });
+  el("length").addEventListener("focus", ()=>{
+    state.guideOptionalSeen = true;
+    state.guideLengthSeen = true;
+    updateGuide();
+  });
+  el("length").addEventListener("change", ()=>{
+    state.guideOptionalSeen = true;
+    state.guideLengthSeen = true;
+    updateGuide();
+  });
 
   applyFont();
   resetAll();
