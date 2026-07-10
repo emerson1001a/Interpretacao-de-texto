@@ -50,6 +50,8 @@
   .q{padding:12px;border-radius:16px;border:1px solid var(--line);background:#f7f8fd;margin:10px 0}
   .q h3{margin:0 0 6px;font-size:13px}
   .q small{display:block;color:var(--muted);margin-bottom:8px}
+  .feedbackHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .feedbackHead h2{margin:0}
   pre{margin:0;padding:12px;border-radius:16px;background:#0f172a;color:#e5e7eb;white-space:pre-wrap;border:1px solid #1f2937}
   .note{font-size:12px;color:var(--muted)}
   .modalback{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
@@ -147,11 +149,11 @@
 
       <div class="sep"></div>
 
-      <h2>Feedback do aluno</h2>
-      <pre id="studentFeedback">—</pre>
-      <div class="btnrow" style="margin-top:12px;justify-content:flex-start;">
+      <div class="feedbackHead">
+        <h2>Feedback do aluno</h2>
         <button id="btnReturnPortal" class="blue" style="display:none;">Entregar para o adulto</button>
       </div>
+      <pre id="studentFeedback">—</pre>
     </section>
   </div>
 </main>
