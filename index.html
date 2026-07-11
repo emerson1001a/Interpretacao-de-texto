@@ -60,6 +60,7 @@
   .modal{width:min(920px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
   table{width:100%;border-collapse:collapse}
   th,td{border-bottom:1px solid var(--line);padding:8px;font-size:12px;text-align:left;vertical-align:top}
+  body.portal-mode .portalIdentityField{display:none}
 </style>
 </head>
 <body>
@@ -78,11 +79,11 @@
         <span id="guideText">Escreva o nome do aluno.</span>
       </div>
 
-      <label>Nome do aluno *</label>
-      <input id="studentName" placeholder="Ex: Miguel"/>
+      <label class="portalIdentityField">Nome do aluno *</label>
+      <input id="studentName" class="portalIdentityField" placeholder="Ex: Miguel"/>
 
-      <label>Idade *</label>
-      <input id="age" type="number" min="6" max="18" value="11"/>
+      <label class="portalIdentityField">Idade *</label>
+      <input id="age" class="portalIdentityField" type="number" min="6" max="18" value="11"/>
 
       <label>Tema (opcional)</label>
       <input id="theme" placeholder="Ex: amizade, esporte, escola..."/>
@@ -193,6 +194,8 @@
   const portal = {
     childId: params.get("child_id") || "",
     childName: params.get("child_name") || "",
+    childAge: params.get("child_age") || params.get("age") || params.get("idade") || "",
+    childBirthDate: params.get("child_birth_date") || params.get("birth_date") || "",
     token: params.get("portal_event_token") || "",
     childToken: params.get("portal_child_token") || "",
     assignmentId: params.get("assignment_id") || "",
@@ -328,12 +331,35 @@
     return age>=6 && age<=18;
   }
 
+  function ageFromPortal(){
+    const directAge = Number(portal.childAge);
+    if(Number.isFinite(directAge) && directAge >= 6 && directAge <= 18) return directAge;
+    if(!portal.childBirthDate) return null;
+    const birth = new Date(portal.childBirthDate);
+    if(Number.isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const hadBirthday =
+      today.getMonth() > birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
+    if(!hadBirthday) age -= 1;
+    return age >= 6 && age <= 18 ? age : null;
+  }
+
+  function applyPortalIdentity(){
+    if(!portal.enabled) return;
+    if(portal.childName) el("studentName").value = portal.childName;
+    const portalAge = ageFromPortal();
+    if(portalAge) el("age").value = String(portalAge);
+    if(!ageReady()) el("age").value = "11";
+  }
+
   function currentGuide(){
     const themeReady = el("theme").value.trim().length > 0 || state.guideOptionalSeen;
     const reading = state.readingStartMs !== null && state.readTimeMs === null;
 
-    if(!nameReady()) return { id:"name", text:"Escreva o nome do aluno." };
-    if(!ageReady()) return { id:"age", text:"Informe a idade entre 6 e 18 anos." };
+    if(!portal.enabled && !nameReady()) return { id:"name", text:"Escreva o nome do aluno." };
+    if(!portal.enabled && !ageReady()) return { id:"age", text:"Informe a idade entre 6 e 18 anos." };
     if(!state.prepared && !themeReady) return { id:"theme", text:"Se quiser, escreva um tema. Se não quiser, siga para o tamanho do texto." };
     if(!state.prepared && !state.guideLengthSeen) return { id:"length", text:"Confira o tamanho do texto. Você pode manter como está." };
     if(!state.prepared) return { id:"prepare", text:"Agora clique em Preparar atividade." };
@@ -706,8 +732,12 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     state.portalEventSaved=false; state.lastFeedback=""; state.lastMetrics={};
     stopReadTimer(); stopQuestionTimer();
 
-    if(!portal.enabled) el("studentName").value="";
-    el("age").value="11";
+    if(!portal.enabled){
+      el("studentName").value="";
+      el("age").value="11";
+    } else {
+      applyPortalIdentity();
+    }
     el("theme").value="";
     el("length").value="medio";
 
@@ -906,13 +936,14 @@ host.onclick = async (ev) => {
 
   function setupPortalMode(){
     if(!portal.enabled) return;
-    if(portal.childName) el("studentName").value = portal.childName;
+    document.body.classList.add("portal-mode");
+    applyPortalIdentity();
     el("btnTeacher").style.display = "none";
     syncPortalReturnButton();
     el("headerCopy").textContent = "Faça a leitura com calma, responda às perguntas e depois retorne à missão.";
     el("guideText").textContent = portal.childName
-      ? `${portal.childName}, confira sua idade e clique em Preparar atividade.`
-      : "Confira seu nome e idade e clique em Preparar atividade.";
+      ? `${portal.childName}, prepare sua leitura e faça uma parte de cada vez.`
+      : "Prepare sua leitura e faça uma parte de cada vez.";
   }
 
   applyFont();

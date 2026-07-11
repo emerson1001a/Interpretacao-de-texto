@@ -171,10 +171,15 @@ function fallbackQuestions(texto) {
 async function generateText(params) {
   const prompt = `
 Crie um texto curto em portugues do Brasil para uma atividade de interpretacao.
-Aluno: ${params.aluno}
+Nome do aluno, apenas para adaptar linguagem e faixa etaria, sem usar como personagem nesta atividade: ${params.aluno}
 Idade: ${params.idade}
 Tema: ${params.tema || "livre"}
 Tamanho: ${params.tamanho || "medio"}
+
+Regras pedagogicas:
+- Nao use o nome do aluno como personagem do texto nesta atividade.
+- Varie personagens, lugares e situacoes de uma atividade para outra.
+- Mantenha vocabulario adequado para a idade e fatos claros para gerar perguntas literais.
 
 Responda apenas com o texto, sem titulo e sem markdown.
 `.trim();
