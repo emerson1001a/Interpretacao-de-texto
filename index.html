@@ -195,6 +195,7 @@
     childName: params.get("child_name") || "",
     token: params.get("portal_event_token") || "",
     childToken: params.get("portal_child_token") || "",
+    assignmentId: params.get("assignment_id") || "",
     assignmentItemId: params.get("assignment_item_id") || "",
     returnUrl: params.get("portal_return_url") || ""
   };
@@ -257,6 +258,7 @@
         portal_child_token: portal.childToken,
         child_id: portal.childId,
         service: "interpretacao",
+        assignment_id: portal.assignmentId,
         assignment_item_id: portal.assignmentItemId,
         activity_type: "leitura_com_perguntas",
         title: el("theme").value.trim() || "Interpretação de texto",
@@ -273,7 +275,7 @@
           child: {
             tone: "positive",
             message: state.lastFeedback || "",
-            next_step: "Entregar a atividade para o adulto acompanhar no portal."
+            next_step: "Retornar à missão para continuar o percurso."
           },
           adult: {
             summary: state.lastFeedback || "",
@@ -902,7 +904,7 @@ host.onclick = async (ev) => {
     if(!portal.enabled) return;
     if(portal.childName) el("studentName").value = portal.childName;
     el("btnTeacher").style.display = "none";
-    el("headerCopy").textContent = "Faça a leitura com calma, responda às perguntas e depois entregue a atividade para o adulto acompanhar no Portal.";
+    el("headerCopy").textContent = "Faça a leitura com calma, responda às perguntas e depois retorne à missão.";
     el("guideText").textContent = portal.childName
       ? `${portal.childName}, confira sua idade e clique em Preparar atividade.`
       : "Confira seu nome e idade e clique em Preparar atividade.";
