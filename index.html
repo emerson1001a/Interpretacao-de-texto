@@ -90,9 +90,9 @@
 
       <label>Tamanho do texto</label>
       <select id="length">
-        <option value="">Automático pela idade</option>
+        <option value="" selected>Automático pela idade</option>
         <option value="curto">Curto</option>
-        <option value="medio" selected>Médio</option>
+        <option value="medio">Médio</option>
         <option value="longo">Longo</option>
       </select>
 
@@ -739,7 +739,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
       applyPortalIdentity();
     }
     el("theme").value="";
-    el("length").value="medio";
+    el("length").value="";
 
     el("kpiRead").textContent="—";
     el("kpiQ").textContent="—";

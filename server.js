@@ -48,6 +48,22 @@ function clampNumber(value, fallback, min, max) {
   return Math.min(Math.max(n, min), max);
 }
 
+function resolveTextProfile(idade, requestedSize) {
+  const requested = cleanText(requestedSize).toLowerCase();
+  const explicitSize = ["curto", "medio", "longo"].includes(requested) ? requested : "";
+  const resolvedSize = explicitSize || (idade <= 8 ? "curto" : "medio");
+  const complexity = idade <= 8
+    ? "frases curtas, vocabulario familiar e uma sequencia simples de acontecimentos"
+    : idade <= 11
+      ? "paragrafos curtos, vocabulario cotidiano e uma inferencia leve"
+      : "paragrafos organizados, vocabulario um pouco mais rico e inferencias moderadas";
+  return {
+    requested: explicitSize || "automatico",
+    resolved: resolvedSize,
+    complexity
+  };
+}
+
 function extractOutputText(data) {
   if (typeof data?.output_text === "string") return data.output_text.trim();
   const parts = [];
@@ -169,17 +185,21 @@ function fallbackQuestions(texto) {
 }
 
 async function generateText(params) {
+  const profile = params.textProfile || resolveTextProfile(params.idade, params.tamanho);
   const prompt = `
 Crie um texto curto em portugues do Brasil para uma atividade de interpretacao.
 Nome do aluno, apenas para adaptar linguagem e faixa etaria, sem usar como personagem nesta atividade: ${params.aluno}
 Idade: ${params.idade}
 Tema: ${params.tema || "livre"}
-Tamanho: ${params.tamanho || "medio"}
+Tamanho aplicado: ${profile.resolved}
+Complexidade aplicada: ${profile.complexity}
 
 Regras pedagogicas:
 - Nao use o nome do aluno como personagem do texto nesta atividade.
 - Varie personagens, lugares e situacoes de uma atividade para outra.
 - Mantenha vocabulario adequado para a idade e fatos claros para gerar perguntas literais.
+- Tamanho pedido pelo adulto ou sistema: ${profile.requested}.
+- Se o tamanho pedido foi automatico, priorize conforto e clareza em vez de alongar demais o texto.
 
 Responda apenas com o texto, sem titulo e sem markdown.
 `.trim();
@@ -188,7 +208,7 @@ Responda apenas com o texto, sem titulo e sem markdown.
     console.warn("OpenAI indisponivel em /api/leitura/start:", error.message);
     return "";
   });
-  return generated || fallbackText(params);
+  return generated || fallbackText({ ...params, tamanho: profile.resolved });
 }
 
 async function generateQuestions(texto) {
@@ -280,8 +300,10 @@ app.post("/api/leitura/start", async (req, res) => {
     const aluno = cleanText(req.body?.aluno, "Miguel") || "Miguel";
     const idade = clampNumber(req.body?.idade, 11, 6, 18);
     const tema = cleanText(req.body?.tema);
-    const tamanho = cleanText(req.body?.tamanho, "medio") || "medio";
-    const texto = await generateText({ aluno, idade, tema, tamanho });
+    const tamanhoPedido = cleanText(req.body?.tamanho);
+    const textProfile = resolveTextProfile(idade, tamanhoPedido);
+    const tamanho = textProfile.resolved;
+    const texto = await generateText({ aluno, idade, tema, tamanho, textProfile });
 
     const store = await readStore();
     const leitura = {
@@ -290,6 +312,8 @@ app.post("/api/leitura/start", async (req, res) => {
       idade,
       tema,
       tamanho,
+      tamanho_pedido: textProfile.requested,
+      complexidade: textProfile.complexity,
       titulo: "Interpretacao de texto",
       texto,
       created_at: new Date().toISOString(),
@@ -300,7 +324,17 @@ app.post("/api/leitura/start", async (req, res) => {
     };
     store.leituras.push(leitura);
     await writeStore(store);
-    res.json({ leitura_id: leitura.id, texto, config: { idade, tema, tamanho } });
+    res.json({
+      leitura_id: leitura.id,
+      texto,
+      config: {
+        idade,
+        tema,
+        tamanho,
+        tamanho_pedido: textProfile.requested,
+        complexidade: textProfile.complexity
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: "Erro ao preparar atividade", details: error.message });
   }
