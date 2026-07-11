@@ -74,6 +74,46 @@ function parseJsonLoose(text) {
   }
 }
 
+function normalizeForMatch(value) {
+  return cleanText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function evidenceInText(evidence, texto) {
+  const normalizedEvidence = normalizeForMatch(evidence);
+  if (normalizedEvidence.length < 8) return false;
+  return normalizeForMatch(texto).includes(normalizedEvidence);
+}
+
+function normalizeQuestion(question, texto) {
+  const type = question?.type === "mcq" ? "mcq" : "open";
+  const prompt = cleanText(question?.prompt);
+  const evidence = cleanText(question?.evidence);
+  if (!prompt || !evidenceInText(evidence, texto)) return null;
+
+  const normalized = {
+    type,
+    prompt,
+    evidence,
+    tags: Array.isArray(question?.tags) ? question.tags.map(String) : []
+  };
+
+  if (type === "mcq") {
+    const options = Array.isArray(question?.options)
+      ? question.options.map((option) => cleanText(option)).filter(Boolean).slice(0, 4)
+      : [];
+    const answerKey = cleanText(question?.answer_key);
+    if (options.length !== 4 || !options.includes(answerKey)) return null;
+    normalized.options = options;
+    normalized.answer_key = answerKey;
+  }
+
+  return normalized;
+}
+
 async function askOpenAI(prompt) {
   if (!process.env.OPENAI_API_KEY) return "";
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -103,23 +143,27 @@ function fallbackText({ idade, tema, tamanho }) {
 }
 
 function fallbackQuestions(texto) {
+  const baseTags = ["segura", "baseada-no-texto"];
   return [
     {
-      type: "mcq",
-      prompt: "Qual foi a orientacao principal da professora?",
-      options: ["Escutar com atencao antes de responder", "Copiar o texto inteiro", "Responder sem pensar", "Ignorar as ideias do grupo"],
-      answer_key: "Escutar com atencao antes de responder",
-      tags: ["literal"]
+      type: "open",
+      prompt: "Qual é o assunto principal do texto? Responda usando uma informação que aparece na leitura.",
+      tags: baseTags
     },
     {
       type: "open",
-      prompt: "Explique com suas palavras qual foi a principal aprendizagem da crianca.",
-      tags: ["inferencia"]
+      prompt: "Cite uma parte do texto que ajudou você a entender a história.",
+      tags: baseTags
     },
     {
       type: "open",
-      prompt: "Escolha uma frase do texto e diga por que ela ajuda a entender a mensagem.",
-      tags: ["vocab"]
+      prompt: "O que você entendeu sobre a atitude ou a descoberta mais importante do texto?",
+      tags: baseTags
+    },
+    {
+      type: "open",
+      prompt: "Se você fosse contar esse texto para alguém, qual detalhe não poderia faltar?",
+      tags: baseTags
     }
   ];
 }
@@ -145,8 +189,13 @@ Responda apenas com o texto, sem titulo e sem markdown.
 async function generateQuestions(texto) {
   const prompt = `
 Crie 4 perguntas de interpretacao para o texto abaixo.
+Regra obrigatoria: cada pergunta deve usar apenas fatos que aparecem literalmente no texto.
+Nao invente personagem, animal, cor, lugar, objeto, sentimento, acao ou sequencia que nao esteja no texto.
+Antes de responder, confira se cada pergunta pode ser respondida lendo somente o texto.
+Para cada pergunta, inclua "evidence" com uma frase curta copiada exatamente do texto que prova que a pergunta esta correta.
+Nas perguntas de multipla escolha, "answer_key" deve ser exatamente igual a uma das opcoes.
 Retorne somente JSON valido neste formato:
-{"questions":[{"type":"mcq","prompt":"...","options":["A","B","C","D"],"answer_key":"A","tags":["literal"]},{"type":"open","prompt":"...","tags":["inferencia"]}]}
+{"questions":[{"type":"mcq","prompt":"...","options":["A","B","C","D"],"answer_key":"A","evidence":"frase copiada do texto","tags":["literal"]},{"type":"open","prompt":"...","evidence":"frase copiada do texto","tags":["inferencia"]}]}
 
 Texto:
 ${texto}
@@ -158,13 +207,9 @@ ${texto}
   });
   const parsed = parseJsonLoose(generated);
   const questions = Array.isArray(parsed?.questions) ? parsed.questions : fallbackQuestions(texto);
-  return questions.slice(0, 5).map((q) => ({
-    type: q.type === "mcq" ? "mcq" : "open",
-    prompt: cleanText(q.prompt, "Responda com base no texto."),
-    options: Array.isArray(q.options) ? q.options.map(String).slice(0, 4) : undefined,
-    answer_key: q.answer_key ? String(q.answer_key) : undefined,
-    tags: Array.isArray(q.tags) ? q.tags.map(String) : []
-  }));
+  const normalized = questions.map((q) => normalizeQuestion(q, texto)).filter(Boolean);
+  const safeQuestions = normalized.length >= 3 ? normalized : fallbackQuestions(texto);
+  return safeQuestions.slice(0, 5);
 }
 
 function computeMetrics(leitura) {

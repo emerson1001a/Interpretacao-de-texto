@@ -53,6 +53,8 @@
   .feedbackHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
   .feedbackHead h2{margin:0}
   pre{margin:0;padding:12px;border-radius:16px;background:#0f172a;color:#e5e7eb;white-space:pre-wrap;border:1px solid #1f2937}
+  #studentFeedback{min-height:110px;font-size:14px;line-height:1.55}
+  #studentFeedback.feedback-ready{background:#ecfdf5;color:#063f36;border:2px solid #10b981;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 16px 36px rgba(15,118,110,.18);font-size:15px;font-weight:650}
   .note{font-size:12px;color:var(--muted)}
   .modalback{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
   .modal{width:min(920px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
@@ -523,6 +525,7 @@
 
     el("kpiRead").textContent="—";
     el("kpiQ").textContent="—";
+    el("studentFeedback").classList.remove("feedback-ready");
     el("studentFeedback").textContent="—";
     el("questions").textContent="Finalize a leitura para iniciar as perguntas.";
     showText(false);
@@ -660,6 +663,7 @@
       });
       state.lastFeedback = fin.feedback || "";
       state.lastMetrics = fin.metrics || {};
+      el("studentFeedback").classList.add("feedback-ready");
       el("studentFeedback").textContent =
 `Sessão: ${state.leituraId}
 
@@ -704,6 +708,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     el("kpiRead").textContent="—";
     el("kpiQ").textContent="—";
     el("kpiSess").textContent="—";
+    el("studentFeedback").classList.remove("feedback-ready");
     el("studentFeedback").textContent="—";
     el("btnReturnPortal").style.display = "none";
     el("questions").textContent="Finalize a leitura para iniciar as perguntas.";
