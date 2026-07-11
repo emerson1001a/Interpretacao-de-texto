@@ -54,7 +54,7 @@
   .feedbackHead h2{margin:0}
   pre{margin:0;padding:12px;border-radius:16px;background:#0f172a;color:#e5e7eb;white-space:pre-wrap;border:1px solid #1f2937}
   #studentFeedback{min-height:110px;font-size:14px;line-height:1.55}
-  #studentFeedback.feedback-ready{background:#ecfdf5;color:#063f36;border:2px solid #10b981;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 16px 36px rgba(15,118,110,.18);font-size:15px;font-weight:650}
+  #studentFeedback.feedback-ready{background:#ecfdf5!important;color:#063f36!important;border:2px solid #10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 16px 36px rgba(15,118,110,.18);font-size:15px;font-weight:650;opacity:1!important}
   .note{font-size:12px;color:var(--muted)}
   .modalback{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
   .modal{width:min(920px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
@@ -153,7 +153,7 @@
 
       <div class="feedbackHead">
         <h2>Feedback do aluno</h2>
-        <button id="btnReturnPortal" class="blue" style="display:none;">Entregar para o adulto</button>
+        <button id="btnReturnPortal" class="blue" style="display:none;">Retornar à missão</button>
       </div>
       <pre id="studentFeedback">—</pre>
     </section>
@@ -334,8 +334,8 @@
     if(state.prepared && state.readingStartMs === null && state.readTimeMs === null) return { id:"startRead", text:"Clique em Iniciar para mostrar o texto." };
     if(reading) return { id:"finishRead", text:"Leia com atenção. Quando terminar, clique em Finalizar leitura." };
     if(state.readTimeMs !== null && state.questions.length && state.qIndex >= 0 && state.qIndex < state.questions.length) return { id:"answer", text:"Responda esta pergunta e clique em Próxima." };
-    if(state.readTimeMs !== null && state.questions.length && state.qIndex === state.questions.length) return { id:"finish", text:"Você respondeu tudo. Clique em Finalizar e ver feedback." };
     if(state.stage >= 4) return { id:"feedback", text:"Leia o feedback com calma." };
+    if(state.readTimeMs !== null && state.questions.length && state.qIndex === state.questions.length) return { id:"finish", text:"Você respondeu tudo. Clique em Finalizar e ver feedback." };
     return { id:"prepare", text:"Agora clique em Preparar atividade." };
   }
 
@@ -679,7 +679,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
         try {
           await sendPortalEvent();
           el("btnReturnPortal").style.display = "inline-flex";
-          el("studentFeedback").textContent += "\n\nAtividade registrada no Portal Educacional. Entregue para o adulto acompanhar.";
+          el("studentFeedback").textContent += "\n\nAtividade registrada no Portal Educacional.";
         } catch (portalError) {
           el("btnReturnPortal").style.display = "inline-flex";
           el("studentFeedback").textContent += `\n\nA atividade ficou pronta, mas ainda não consegui registrar no portal: ${portalError.message}`;
