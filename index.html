@@ -242,6 +242,10 @@
     if (url) window.location.href = url;
   }
 
+  function syncPortalReturnButton() {
+    el("btnReturnPortal").style.display = portal.enabled ? "inline-flex" : "none";
+  }
+
   async function sendPortalEvent() {
     if (!portal.enabled || state.portalEventSaved) return false;
     const returnUrl = new URL(portal.returnUrl);
@@ -652,7 +656,7 @@
 
   async function finishAndFeedback(){
     setStep(4);
-    el("btnReturnPortal").style.display = "none";
+    syncPortalReturnButton();
     try{
       const fin = await api("/api/leitura/finish", {
         leitura_id: state.leituraId,
@@ -712,7 +716,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     el("kpiSess").textContent="—";
     el("studentFeedback").classList.remove("feedback-ready");
     el("studentFeedback").textContent="—";
-    el("btnReturnPortal").style.display = "none";
+    syncPortalReturnButton();
     el("questions").textContent="Finalize a leitura para iniciar as perguntas.";
     showText(false);
     setStep(0);
@@ -904,6 +908,7 @@ host.onclick = async (ev) => {
     if(!portal.enabled) return;
     if(portal.childName) el("studentName").value = portal.childName;
     el("btnTeacher").style.display = "none";
+    syncPortalReturnButton();
     el("headerCopy").textContent = "Faça a leitura com calma, responda às perguntas e depois retorne à missão.";
     el("guideText").textContent = portal.childName
       ? `${portal.childName}, confira sua idade e clique em Preparar atividade.`
