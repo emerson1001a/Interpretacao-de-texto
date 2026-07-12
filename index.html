@@ -52,6 +52,7 @@
   .q small{display:block;color:var(--muted);margin-bottom:8px}
   .feedbackHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
   .feedbackHead h2{margin:0}
+  .feedbackHead .blue{background:#0f766e}
   pre{margin:0;padding:12px;border-radius:16px;background:#0f172a;color:#e5e7eb;white-space:pre-wrap;border:1px solid #1f2937}
   #studentFeedback{min-height:110px;font-size:14px;line-height:1.55}
   #studentFeedback.feedback-ready{background:#ecfdf5!important;color:#063f36!important;border:2px solid #10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 16px 36px rgba(15,118,110,.18);font-size:15px;font-weight:650;opacity:1!important}
@@ -246,7 +247,8 @@
   }
 
   function syncPortalReturnButton() {
-    el("btnReturnPortal").style.display = portal.enabled ? "inline-flex" : "none";
+    const readyToReturn = portal.enabled && state.stage >= 4 && Boolean(state.lastFeedback);
+    el("btnReturnPortal").style.display = readyToReturn ? "inline-flex" : "none";
   }
 
   async function sendPortalEvent() {
@@ -697,7 +699,7 @@
       state.lastMetrics = fin.metrics || {};
       el("studentFeedback").classList.add("feedback-ready");
       el("studentFeedback").textContent =
-`Sessão: ${state.leituraId}
+`Missão de leitura concluída!
 
 ${fin.feedback || "—"}
 
@@ -710,11 +712,11 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
       if (portal.enabled) {
         try {
           await sendPortalEvent();
-          el("btnReturnPortal").style.display = "inline-flex";
-          el("studentFeedback").textContent += "\n\nAtividade registrada no Portal Educacional.";
+          syncPortalReturnButton();
+          el("studentFeedback").textContent += "\n\nAtividade registrada no Portal Educacional. Clique em Retornar à missão para continuar.";
         } catch (portalError) {
-          el("btnReturnPortal").style.display = "inline-flex";
-          el("studentFeedback").textContent += `\n\nA atividade ficou pronta, mas ainda não consegui registrar no portal: ${portalError.message}`;
+          syncPortalReturnButton();
+          el("studentFeedback").textContent += `\n\nA atividade ficou pronta. Tente Retornar à missão e confira se ela apareceu no portal. Detalhe: ${portalError.message}`;
         }
       }
       updateGuide();
