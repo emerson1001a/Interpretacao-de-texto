@@ -130,6 +130,14 @@ function normalizeQuestion(question, texto) {
   return normalized;
 }
 
+function evidenceSentences(texto) {
+  const sentences = cleanText(texto)
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => cleanText(sentence))
+    .filter((sentence) => sentence.length >= 20);
+  return sentences.length ? sentences : [cleanText(texto).slice(0, 160)];
+}
+
 async function askOpenAI(prompt) {
   if (!process.env.OPENAI_API_KEY) return "";
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -160,25 +168,31 @@ function fallbackText({ idade, tema, tamanho }) {
 
 function fallbackQuestions(texto) {
   const baseTags = ["segura", "baseada-no-texto"];
+  const evidences = evidenceSentences(texto);
+  const evidenceAt = (index) => evidences[Math.min(index, evidences.length - 1)] || cleanText(texto);
   return [
     {
       type: "open",
       prompt: "Qual é o assunto principal do texto? Responda usando uma informação que aparece na leitura.",
+      evidence: evidenceAt(0),
       tags: baseTags
     },
     {
       type: "open",
       prompt: "Cite uma parte do texto que ajudou você a entender a história.",
+      evidence: evidenceAt(1),
       tags: baseTags
     },
     {
       type: "open",
       prompt: "O que você entendeu sobre a atitude ou a descoberta mais importante do texto?",
+      evidence: evidenceAt(2),
       tags: baseTags
     },
     {
       type: "open",
       prompt: "Se você fosse contar esse texto para alguém, qual detalhe não poderia faltar?",
+      evidence: evidenceAt(3),
       tags: baseTags
     }
   ];
@@ -233,7 +247,13 @@ ${texto}
   const parsed = parseJsonLoose(generated);
   const questions = Array.isArray(parsed?.questions) ? parsed.questions : fallbackQuestions(texto);
   const normalized = questions.map((q) => normalizeQuestion(q, texto)).filter(Boolean);
-  const safeQuestions = normalized.length >= 3 ? normalized : fallbackQuestions(texto);
+  const fallback = fallbackQuestions(texto);
+  const normalizedFallback = fallback.map((q) => normalizeQuestion(q, texto)).filter(Boolean);
+  const safeQuestions = normalized.length >= 3
+    ? normalized
+    : normalizedFallback.length >= 3
+      ? normalizedFallback
+      : fallback;
   return safeQuestions.slice(0, 5);
 }
 
