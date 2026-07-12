@@ -273,18 +273,32 @@ async function generateFeedback(leitura) {
     .join("\n\n");
   const prompt = `
 Crie um feedback curto, gentil e especifico para uma crianca sobre esta atividade de interpretacao.
+Use portugues do Brasil e fale diretamente com a crianca.
+
+Estrutura desejada:
+1. Comece reconhecendo o esforco ou uma atitude positiva.
+2. Cite uma coisa concreta que a crianca fez bem, usando pistas das respostas.
+3. Diga apenas um proximo passo pratico para melhorar na proxima leitura.
+
+Regras de cuidado:
+- Nao use tom de bronca.
+- Nao use diagnosticos, rotulos ou comparacoes com outras criancas.
+- Nao diga que a crianca foi mal.
+- Nao transforme a pontuacao em nota; use a pontuacao apenas como apoio interno.
+- Se houver poucos dados, diga que foi uma boa tentativa e convide a procurar pistas no texto com calma.
+
 Texto: ${leitura.texto}
 Respostas:
 ${respostas}
 Pontuacao objetiva: ${metrics.mcq_score}/${metrics.mcq_max}
-Responda em portugues, sem markdown.
+Responda sem markdown, em ate 5 frases.
 `.trim();
 
   const generated = await askOpenAI(prompt).catch((error) => {
     console.warn("OpenAI indisponivel em /api/leitura/finish:", error.message);
     return "";
   });
-  return generated || `Bom trabalho! Voce concluiu a leitura e respondeu as perguntas. Continue usando partes do texto para justificar suas respostas. Resultado objetivo: ${metrics.mcq_score}/${metrics.mcq_max}.`;
+  return generated || "Bom trabalho! Voce concluiu a leitura e respondeu com atencao. Na proxima tentativa, procure voltar ao texto e apontar a parte que ajudou na resposta. Assim, cada resposta fica mais segura e mais facil de explicar.";
 }
 
 app.get(["/", "/index.html"], (_req, res) => {
