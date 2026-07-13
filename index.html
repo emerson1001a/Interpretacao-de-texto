@@ -57,11 +57,14 @@
   #studentFeedback{min-height:110px;font-size:14px;line-height:1.55}
   #studentFeedback.feedback-ready{background:#ecfdf5!important;color:#063f36!important;border:2px solid #10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.14),0 16px 36px rgba(15,118,110,.18);font-size:15px;font-weight:650;opacity:1!important}
   .note{font-size:12px;color:var(--muted)}
+  .portalIdentitySummary{display:none;margin:0 0 12px;padding:10px 12px;border-radius:16px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;font-size:13px;line-height:1.35}
+  .portalIdentitySummary strong{display:block;margin-bottom:2px;color:#172554}
   .modalback{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
   .modal{width:min(920px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
   table{width:100%;border-collapse:collapse}
   th,td{border-bottom:1px solid var(--line);padding:8px;font-size:12px;text-align:left;vertical-align:top}
   body.portal-mode .portalIdentityField{display:none}
+  body.portal-mode .portalIdentitySummary{display:block}
 </style>
 </head>
 <body>
@@ -78,6 +81,11 @@
       <div id="guidePanel" class="guidePanel">
         <strong>Agora</strong>
         <span id="guideText">Escreva o nome do aluno.</span>
+      </div>
+
+      <div id="portalIdentitySummary" class="portalIdentitySummary">
+        <strong>Atividade da missao</strong>
+        <span id="portalIdentityText">Aluno identificado pelo Portal Educacional.</span>
       </div>
 
       <label class="portalIdentityField">Nome do aluno *</label>
@@ -354,6 +362,10 @@
     const portalAge = ageFromPortal();
     if(portalAge) el("age").value = String(portalAge);
     if(!ageReady()) el("age").value = "11";
+    const name = el("studentName").value.trim() || "Aluno da missao";
+    const age = Number(el("age").value || 0);
+    const ageText = ageReady() ? `, ${age} anos` : "";
+    el("portalIdentityText").textContent = `${name}${ageText}. Nome e idade vieram do Portal Educacional.`;
   }
 
   function currentGuide(){
