@@ -20,6 +20,11 @@
   input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);outline:none;background:#fff;font-size:14px}
   input.guide-active,select.guide-active,textarea.guide-active{border-color:#f59e0b;background:#fff7ed;box-shadow:0 0 0 4px rgba(245,158,11,.20),0 12px 24px rgba(245,158,11,.14)}
   button.guide-active{background:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,.22),0 14px 28px rgba(249,115,22,.20);transform:translateY(-1px)}
+  #btnPrepare.guide-active{background:linear-gradient(135deg,#16a34a,#0f766e)!important;box-shadow:0 0 0 5px rgba(22,163,74,.22),0 16px 34px rgba(15,118,110,.24);transform:translateY(-2px) scale(1.02)}
+  #btnPrepare.guide-active::after{content:"  \2190 clique aqui";font-weight:900}
+  button.is-busy{background:#0f766e!important;color:#fff!important;box-shadow:0 0 0 4px rgba(15,118,110,.18),0 12px 28px rgba(15,118,110,.22)!important;opacity:1!important;cursor:wait!important}
+  button.is-busy::after{content:"";width:12px;height:12px;margin-left:8px;border-radius:999px;border:2px solid rgba(255,255,255,.55);border-top-color:#fff;display:inline-block;vertical-align:-2px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .guide-done{border-color:#86efac!important;background:#f0fdf4!important}
   .guide-ghost{background:#f8fafc!important;border-color:#e5e7eb!important;color:#7b8496!important;opacity:.72}
   button.guide-ghost{background:#eef1fb!important;color:#7b8496!important;opacity:.70}
@@ -663,6 +668,12 @@
   async function finishRead(){
     if(!state.readingStartMs) return;
 
+    const finishButton = el("btnFinishRead");
+    const previousLabel = finishButton.textContent;
+    finishButton.disabled = true;
+    finishButton.classList.add("is-busy");
+    finishButton.textContent = "Finalizando...";
+
     state.readTimeMs = Date.now()-state.readingStartMs;
     stopReadTimer();
     el("kpiRead").textContent = formatMs(state.readTimeMs);
@@ -688,6 +699,10 @@
       setButtons();
     } catch(e){
       alert("Erro ao finalizar leitura: " + (e.message||e));
+    } finally {
+      finishButton.classList.remove("is-busy");
+      finishButton.textContent = previousLabel;
+      setButtons();
     }
   }
 
