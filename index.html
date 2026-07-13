@@ -59,12 +59,17 @@
   .note{font-size:12px;color:var(--muted)}
   .portalIdentitySummary{display:none;margin:0 0 12px;padding:10px 12px;border-radius:16px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;font-size:13px;line-height:1.35}
   .portalIdentitySummary strong{display:block;margin-bottom:2px;color:#172554}
+  .readingPlanSummary{display:none;margin:0 0 12px;padding:10px 12px;border-radius:16px;border:1px solid #bbf7d0;background:#f0fdf4;color:#14532d;font-size:13px;line-height:1.35}
+  .readingPlanSummary strong{display:block;margin-bottom:2px;color:#14532d}
+  .lengthHint{margin:6px 0 0;font-size:12px;color:var(--muted);line-height:1.35}
   .modalback{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
   .modal{width:min(920px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
   table{width:100%;border-collapse:collapse}
   th,td{border-bottom:1px solid var(--line);padding:8px;font-size:12px;text-align:left;vertical-align:top}
   body.portal-mode .portalIdentityField{display:none}
   body.portal-mode .portalIdentitySummary{display:block}
+  body.portal-mode .readingPlanSummary{display:block}
+  body.portal-mode .lengthField{display:none}
 </style>
 </head>
 <body>
@@ -88,6 +93,11 @@
         <span id="portalIdentityText">Aluno identificado pelo Portal Educacional.</span>
       </div>
 
+      <div id="readingPlanSummary" class="readingPlanSummary">
+        <strong>Plano da leitura</strong>
+        <span id="readingPlanText">O tamanho do texto será sugerido pela idade.</span>
+      </div>
+
       <label class="portalIdentityField">Nome do aluno *</label>
       <input id="studentName" class="portalIdentityField" placeholder="Ex: Miguel"/>
 
@@ -97,6 +107,7 @@
       <label>Tema (opcional)</label>
       <input id="theme" placeholder="Ex: amizade, esporte, escola..."/>
 
+      <div class="lengthField">
       <label>Tamanho do texto</label>
       <select id="length">
         <option value="" selected>Automático pela idade</option>
@@ -104,6 +115,8 @@
         <option value="medio">Médio</option>
         <option value="longo">Longo</option>
       </select>
+      <p id="lengthHint" class="lengthHint">Sugestão automática pela idade.</p>
+      </div>
 
       <div class="btnrow">
         <button id="btnPrepare" class="blue">Preparar atividade</button>
@@ -356,6 +369,41 @@
     return age >= 6 && age <= 18 ? age : null;
   }
 
+  function suggestedReadingProfile(){
+    const age = Number(el("age").value || 11);
+    if(age <= 8) {
+      return {
+        size: "curto",
+        copy: "Sugestão: texto curto, frases simples e vocabulário familiar."
+      };
+    }
+    if(age <= 11) {
+      return {
+        size: "medio",
+        copy: "Sugestão: texto médio, parágrafos curtos e uma inferência leve."
+      };
+    }
+    return {
+      size: "medio",
+      copy: "Sugestão: texto médio, vocabulário um pouco mais rico e inferências moderadas."
+    };
+  }
+
+  function updateReadingPlan(){
+    const selected = el("length").value;
+    const profile = suggestedReadingProfile();
+    const manual = {
+      curto: "O adulto escolheu texto curto para esta atividade.",
+      medio: "O adulto escolheu texto médio para esta atividade.",
+      longo: "O adulto escolheu texto longo. Use apenas quando a criança estiver pronta para uma leitura maior."
+    };
+    const text = selected ? manual[selected] : profile.copy;
+    el("lengthHint").textContent = text;
+    el("readingPlanText").textContent = portal.enabled
+      ? `${text} A criança não precisa escolher o tamanho agora.`
+      : `${text} Você pode manter automático ou ajustar manualmente.`;
+  }
+
   function applyPortalIdentity(){
     if(!portal.enabled) return;
     if(portal.childName) el("studentName").value = portal.childName;
@@ -366,6 +414,7 @@
     const age = Number(el("age").value || 0);
     const ageText = ageReady() ? `, ${age} anos` : "";
     el("portalIdentityText").textContent = `${name}${ageText}. Nome e idade vieram do Portal Educacional.`;
+    updateReadingPlan();
   }
 
   function currentGuide(){
@@ -754,6 +803,7 @@ ${state.qTimesMs.map((ms,i)=>`Q${i+1}: ${formatMs(ms)}`).join("\n")}
     }
     el("theme").value="";
     el("length").value="";
+    updateReadingPlan();
 
     el("kpiRead").textContent="—";
     el("kpiQ").textContent="—";
@@ -933,6 +983,7 @@ host.onclick = async (ev) => {
     el(id).addEventListener("input", scheduleGuide);
     el(id).addEventListener("focus", updateGuide);
   });
+  el("age").addEventListener("input", updateReadingPlan);
   el("theme").addEventListener("blur", ()=>{
     state.guideOptionalSeen = true;
     updateGuide();
@@ -945,6 +996,7 @@ host.onclick = async (ev) => {
   el("length").addEventListener("change", ()=>{
     state.guideOptionalSeen = true;
     state.guideLengthSeen = true;
+    updateReadingPlan();
     updateGuide();
   });
 
