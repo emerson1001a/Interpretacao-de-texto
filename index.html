@@ -20,8 +20,10 @@
   input,select,textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);outline:none;background:#fff;font-size:14px}
   input.guide-active,select.guide-active,textarea.guide-active{border-color:#f59e0b;background:#fff7ed;box-shadow:0 0 0 4px rgba(245,158,11,.20),0 12px 24px rgba(245,158,11,.14)}
   button.guide-active{background:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,.22),0 14px 28px rgba(249,115,22,.20);transform:translateY(-1px)}
-  #btnPrepare.guide-active{background:linear-gradient(135deg,#16a34a,#0f766e)!important;box-shadow:0 0 0 5px rgba(22,163,74,.22),0 16px 34px rgba(15,118,110,.24);transform:translateY(-2px) scale(1.02)}
-  #btnPrepare.guide-active::after{content:"  \2190 clique aqui";font-weight:900}
+  #btnPrepare.prepare-cta:not(:disabled){background:linear-gradient(135deg,#16a34a,#0f766e)!important;color:#fff!important;box-shadow:0 0 0 5px rgba(22,163,74,.22),0 16px 34px rgba(15,118,110,.24)!important;opacity:1!important;transform:translateY(-2px) scale(1.02)}
+  #btnPrepare.prepare-cta:not(:disabled)::after{content:"  \2190 comece aqui";font-weight:900}
+  #btnPrepare.guide-active{background:linear-gradient(135deg,#16a34a,#0f766e)!important;box-shadow:0 0 0 5px rgba(22,163,74,.28),0 16px 34px rgba(15,118,110,.28)!important;transform:translateY(-2px) scale(1.02)}
+  #btnPrepare.guide-done::after,#btnPrepare:disabled::after{content:""}
   button.is-busy{background:#0f766e!important;color:#fff!important;box-shadow:0 0 0 4px rgba(15,118,110,.18),0 12px 28px rgba(15,118,110,.22)!important;opacity:1!important;cursor:wait!important}
   button.is-busy::after{content:"";width:12px;height:12px;margin-left:8px;border-radius:999px;border:2px solid rgba(255,255,255,.55);border-top-color:#fff;display:inline-block;vertical-align:-2px;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -124,7 +126,7 @@
       </div>
 
       <div class="btnrow">
-        <button id="btnPrepare" class="blue">Preparar atividade</button>
+        <button id="btnPrepare" class="blue prepare-cta">Preparar atividade</button>
         <button id="btnReset" class="secondary">Limpar</button>
         <button id="btnTeacher" class="warn" style="margin-left:auto">Área da professora</button>
       </div>
